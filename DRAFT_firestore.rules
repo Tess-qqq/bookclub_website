@@ -1,0 +1,43 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Phase 3: Primitive Definition
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    // Phase 4: Validation Blueprint
+    function isValidBook(data) {
+      return data.keys().hasAll(['title', 'author', 'uniId', 'createdAt'])
+        && data.keys().size() == 4
+        && data.title is string && data.title.size() > 0 && data.title.size() <= 200
+        && data.author is string && data.author.size() > 0 && data.author.size() <= 200
+        && data.uniId in ['AMU', 'AITU', 'NU']
+        && data.createdAt == request.time;
+    }
+
+    match /books/{bookId} {
+      // 8. Secure List Queries
+      // Since it's a public book club, anyone can list.
+      // But we restrict what they can see if we had private fields.
+      // Here, all fields are public.
+      allow list: if true;
+      allow get: if isValidId(bookId);
+
+      // Anyone can add a book, but must follow strict schema
+      allow create: if isValidId(bookId) && isValidBook(incoming());
+
+      // Prevention of vandalism: items are immutable and cannot be deleted by public
+      allow update, delete: if false;
+    }
+  }
+}
