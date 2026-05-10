@@ -1,0 +1,22 @@
+{
+  "entities": {
+    "Book": {
+      "title": "Book",
+      "description": "A book added to a university's book club list.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "description": "The title of the book." },
+        "author": { "type": "string", "description": "The author of the book." },
+        "uniId": { "type": "string", "enum": ["AMU", "AITU", "NU"], "description": "The university this book belongs to." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "When the book was added." }
+      },
+      "required": ["title", "author", "uniId", "createdAt"]
+    }
+  },
+  "firestore": {
+    "books/{bookId}": {
+      "schema": "Book",
+      "description": "Store books for all universities."
+    }
+  }
+}
