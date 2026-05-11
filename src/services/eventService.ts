@@ -1,7 +1,5 @@
 import {
   collection,
-  addDoc,
-  deleteDoc,
   updateDoc,
   doc,
   query,
@@ -9,7 +7,6 @@ import {
   orderBy,
   onSnapshot,
   getDoc,
-  serverTimestamp,
   type QuerySnapshot,
   type DocumentData,
 } from 'firebase/firestore';
@@ -52,41 +49,37 @@ export function subscribeToEvents(uniId: string, callback: (events: BookEvent[])
   );
 }
 
-export async function createEvent(event: Omit<BookEvent, 'id' | 'createdAt'>): Promise<string> {
-  const payload: any = {
-    title: event.title,
-    description: event.description || '',
-    date: event.date,
-    status: event.status,
-    uniId: event.uniId,
-    votingOptions: event.votingOptions ?? [],
-    createdAt: serverTimestamp(),
-  };
-  if (event.bookTitle) payload.bookTitle = event.bookTitle;
-  if (event.bookAuthor) payload.bookAuthor = event.bookAuthor;
-  const ref = await addDoc(collection(db, 'events'), payload);
-  return ref.id;
+function getStoredVote(eventId: string): string | null {
+  try { return localStorage.getItem(`vote_${eventId}`); } catch { return null; }
+}
+function storeVote(eventId: string, optionId: string) {
+  try { localStorage.setItem(`vote_${eventId}`, optionId); } catch { }
 }
 
-export async function deleteEvent(eventId: string): Promise<void> {
-  await deleteDoc(doc(db, 'events', eventId));
+export function getUserVote(eventId: string): string | null {
+  return getStoredVote(eventId);
 }
 
-export async function addVotingOption(eventId: string, title: string, author: string): Promise<void> {
+export async function castVote(eventId: string, optionId: string): Promise<void> {
+  const existing = getStoredVote(eventId);
+  if (existing === optionId) return;
+
   const eventRef = doc(db, 'events', eventId);
   const snap = await getDoc(eventRef);
   if (!snap.exists()) throw new Error('Event not found');
-  const data = snap.data() as BookEvent;
-  const options = [...(data.votingOptions ?? [])];
-  options.push({ id: `opt_${Date.now()}`, title, author, votes: 0 });
-  await updateDoc(eventRef, { votingOptions: options });
-}
 
-export async function removeVotingOption(eventId: string, optionId: string): Promise<void> {
-  const eventRef = doc(db, 'events', eventId);
-  const snap = await getDoc(eventRef);
-  if (!snap.exists()) throw new Error('Event not found');
-  const data = snap.data() as BookEvent;
-  const options = (data.votingOptions ?? []).filter((o) => o.id !== optionId);
+  const eventData = snap.data() as BookEvent;
+  const options = [...(eventData.votingOptions ?? [])];
+
+  if (existing) {
+    const prev = options.find((o) => o.id === existing);
+    if (prev) prev.votes = Math.max(0, prev.votes - 1);
+  }
+
+  const target = options.find((o) => o.id === optionId);
+  if (!target) throw new Error('Option not found');
+  target.votes += 1;
+
   await updateDoc(eventRef, { votingOptions: options });
+  storeVote(eventId, optionId);
 }
