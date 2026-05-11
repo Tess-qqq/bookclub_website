@@ -1,5 +1,7 @@
 import {
   collection,
+  addDoc,
+  deleteDoc,
   updateDoc,
   doc,
   query,
@@ -7,6 +9,7 @@ import {
   orderBy,
   onSnapshot,
   getDoc,
+  serverTimestamp,
   type QuerySnapshot,
   type DocumentData,
 } from 'firebase/firestore';
@@ -34,35 +37,11 @@ export interface VotingOption {
   votes: number;
 }
 
-// ── Admin PIN ─────────────────────────────────────────────────────────────────
-// The PIN is also validated server-side in /api/admin/events.
-// We expose a client-side check only to gate UI elements.
 const ADMIN_PIN = import.meta.env.VITE_ADMIN_PIN || 'serin2024';
 
 export function checkAdminPin(pin: string): boolean {
   return pin === ADMIN_PIN;
 }
-
-// ── API base URL ──────────────────────────────────────────────────────────────
-const API_BASE = import.meta.env.VITE_APP_URL || '';
-
-async function adminFetch(
-  path: string,
-  method: string,
-  pin: string,
-  body?: object
-): Promise<Response> {
-  return fetch(`${API_BASE}${path}`, {
-    method,
-    headers: {
-      'Content-Type': 'application/json',
-      'x-admin-pin': pin,
-    },
-    ...(body ? { body: JSON.stringify(body) } : {}),
-  });
-}
-
-// ── Events ────────────────────────────────────────────────────────────────────
 
 export function subscribeToEvents(
   uniId: string,
@@ -73,7 +52,6 @@ export function subscribeToEvents(
     where('uniId', '==', uniId),
     orderBy('date', 'desc')
   );
-
   return onSnapshot(
     q,
     (snapshot: QuerySnapshot<DocumentData>) => {
@@ -85,21 +63,28 @@ export function subscribeToEvents(
 }
 
 export async function createEvent(
-  pin: string,
+  _pin: string,
   event: Omit<BookEvent, 'id' | 'createdAt'>
 ): Promise<string> {
-  const res = await adminFetch('/api/admin/events', 'POST', pin, event);
-  if (!res.ok) throw new Error(await res.text());
-  const data = await res.json();
-  return data.id as string;
+  const payload: any = {
+    title: event.title,
+    description: event.description || '',
+    date: event.date,
+    status: event.status,
+    uniId: event.uniId,
+    votingOptions: event.votingOptions ?? [],
+    createdAt: serverTimestamp(),
+  };
+  if (event.bookTitle) payload.bookTitle = event.bookTitle;
+  if (event.bookAuthor) payload.bookAuthor = event.bookAuthor;
+
+  const ref = await addDoc(collection(db, 'events'), payload);
+  return ref.id;
 }
 
-export async function deleteEvent(pin: string, eventId: string): Promise<void> {
-  const res = await adminFetch(`/api/admin/events?id=${eventId}`, 'DELETE', pin);
-  if (!res.ok) throw new Error(await res.text());
+export async function deleteEvent(_pin: string, eventId: string): Promise<void> {
+  await deleteDoc(doc(db, 'events', eventId));
 }
-
-// ── Voting (client-side, Firestore directly) ──────────────────────────────────
 
 function getStoredVote(eventId: string): string | null {
   try { return localStorage.getItem(`vote_${eventId}`); } catch { return null; }
@@ -133,29 +118,11 @@ export async function castVote(eventId: string, optionId: string): Promise<void>
   if (!target) throw new Error('Option not found');
   target.votes += 1;
 
-  // updateDoc with only the votingOptions field — matches Firestore rule
-  await updateDoc(eventRef, {
-    votingOptions: options,
-    // echo back the immutable fields so the rule's size check passes
-    uniId: eventData.uniId,
-    status: eventData.status,
-    title: eventData.title,
-    date: eventData.date,
-    description: eventData.description ?? '',
-    ...(eventData.bookTitle !== undefined ? { bookTitle: eventData.bookTitle } : {}),
-    ...(eventData.bookAuthor !== undefined ? { bookAuthor: eventData.bookAuthor } : {}),
-    createdAt: eventData.createdAt,
-  });
+  await updateDoc(eventRef, { votingOptions: options });
   storeVote(eventId, optionId);
 }
 
-// ── Admin: voting options (via Firestore directly is fine since voting update rule covers it)
-
-export async function addVotingOption(
-  eventId: string,
-  title: string,
-  author: string
-): Promise<void> {
+export async function addVotingOption(eventId: string, title: string, author: string): Promise<void> {
   const eventRef = doc(db, 'events', eventId);
   const snap = await getDoc(eventRef);
   if (!snap.exists()) throw new Error('Event not found');
@@ -163,18 +130,7 @@ export async function addVotingOption(
   const eventData = snap.data() as BookEvent;
   const options = [...(eventData.votingOptions ?? [])];
   options.push({ id: `opt_${Date.now()}`, title, author, votes: 0 });
-
-  await updateDoc(eventRef, {
-    votingOptions: options,
-    uniId: eventData.uniId,
-    status: eventData.status,
-    title: eventData.title,
-    date: eventData.date,
-    description: eventData.description ?? '',
-    ...(eventData.bookTitle !== undefined ? { bookTitle: eventData.bookTitle } : {}),
-    ...(eventData.bookAuthor !== undefined ? { bookAuthor: eventData.bookAuthor } : {}),
-    createdAt: eventData.createdAt,
-  });
+  await updateDoc(eventRef, { votingOptions: options });
 }
 
 export async function removeVotingOption(eventId: string, optionId: string): Promise<void> {
@@ -184,16 +140,5 @@ export async function removeVotingOption(eventId: string, optionId: string): Pro
 
   const eventData = snap.data() as BookEvent;
   const options = (eventData.votingOptions ?? []).filter((o) => o.id !== optionId);
-
-  await updateDoc(eventRef, {
-    votingOptions: options,
-    uniId: eventData.uniId,
-    status: eventData.status,
-    title: eventData.title,
-    date: eventData.date,
-    description: eventData.description ?? '',
-    ...(eventData.bookTitle !== undefined ? { bookTitle: eventData.bookTitle } : {}),
-    ...(eventData.bookAuthor !== undefined ? { bookAuthor: eventData.bookAuthor } : {}),
-    createdAt: eventData.createdAt,
-  });
+  await updateDoc(eventRef, { votingOptions: options });
 }
