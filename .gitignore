@@ -6,3 +6,4 @@ coverage/
 *.log
 .env*
 !.env.example
+serinbookclub-firebase-adminsdk-fbsvc-47734ece47.json
