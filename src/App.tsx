@@ -650,7 +650,7 @@ export default function App() {
       <header className="sticky top-0 z-20 border-b border-white/6 bg-[#0a1830]/90 backdrop-blur-md">
         <div className="max-w-2xl mx-auto px-5 h-13 flex items-center justify-between">
           <button onClick={() => setPage('home')}>
-            <img src="/serinclublogo.jpg" alt="Sërin" className="w-8 h-8 rounded-xl object-cover" />
+            <img src="/serinclublogo.jpg" alt="Sërin" className="w-8 h-8 rounded-none object-cover" />
           </button>
           <nav className="hidden sm:flex items-center gap-0.5">
             {NAV.map(({ id, label }) => (
