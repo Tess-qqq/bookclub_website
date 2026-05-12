@@ -192,7 +192,7 @@ function HomePage({ onNav, allEvents, allBooks }: {
         {/* Hero */}
         <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
           <div className="flex items-center gap-4 mb-6">
-            <img src="/serinclublogo.jpg" alt="Sërin"
+            <img src="serinclublogo.jpg" alt="Sërin"
                  className="w-[72px] h-[72px] rounded-2xl object-cover shadow-lg shadow-black/40 flex-shrink-0" />
             <div>
               <h1 className="font-display text-[2.6rem] leading-none text-white">Sërin</h1>
