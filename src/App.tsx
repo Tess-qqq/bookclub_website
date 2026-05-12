@@ -9,6 +9,7 @@ import {
   subscribeToEvents, castVote, getUserVote,
   type BookEvent, type EventStatus,
 } from './services/eventService';
+import * as React from "react";
 
 const UNIVERSITIES = [
   { id: 'AMU',  name: 'AMU',  fullName: 'Astana Medical University' },
@@ -255,7 +256,7 @@ function HomePage({ onNav, allEvents, allBooks }: {
       <div className="pt-10 pb-16 border-b border-white/6">
         {/* Logo — overflow:hidden clips the jpg to the rounded corners, no bg bleed */}
         <motion.div style={{ y: scrollY * -0.08 }} className="mb-8 inline-block">
-          <div className="w-20 h-20 rounded-2xl overflow-hidden">
+          <div className="w-20 h-20 2xl overflow-hidden">
             <img src="/serinclublogo.jpg" alt="Sërin" className="w-full h-full object-cover block" />
           </div>
         </motion.div>
