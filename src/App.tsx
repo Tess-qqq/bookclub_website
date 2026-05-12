@@ -48,25 +48,43 @@ async function fetchCover(title: string, author: string): Promise<string | null>
 }
 
 function BookCover({ title, author, size = 'md' }: { title: string; author: string; size?: 'sm' | 'md' | 'lg' }) {
-  const [url, setUrl] = useState<string | null>(null);
+  const [url, setUrl] = useState<string | null | undefined>(undefined); // undefined = loading
   const [loaded, setLoaded] = useState(false);
-
-  useEffect(() => {
-    fetchCover(title, author).then(setUrl);
-  }, [title, author]);
-
   const sizes = { sm: 'w-10 h-14', md: 'w-12 h-16', lg: 'w-16 h-24' };
 
+  // deterministic pastel color from title
+  const hue = title.split('').reduce((a, c) => a + c.charCodeAt(0), 0) % 360;
+  const bg  = `hsl(${hue},30%,18%)`;
+  const fg  = `hsl(${hue},60%,55%)`;
+
+  useEffect(() => { fetchCover(title, author).then(setUrl); }, [title, author]);
+
+  // loading skeleton
+  if (url === undefined) return (
+    <div className={`${sizes[size]} rounded-lg flex-shrink-0 animate-pulse`} style={{ background: bg }} />
+  );
+
+  // no cover found — nice colored fallback with initials
   if (!url) return (
-    <div className={`${sizes[size]} rounded-lg bg-white/5 border border-white/10 flex items-center justify-center flex-shrink-0`}>
-      <BookMarked className="w-4 h-4 text-amber-500/40" />
+    <div className={`${sizes[size]} rounded-lg flex-shrink-0 flex flex-col items-center justify-center gap-1 px-1`} style={{ background: bg }}>
+      <span className="font-display text-lg leading-none" style={{ color: fg }}>
+        {title.charAt(0)}
+      </span>
+      <span className="text-[8px] text-center leading-tight opacity-60 line-clamp-2" style={{ color: fg }}>
+        {title.split(' ').slice(0, 2).join(' ')}
+      </span>
     </div>
   );
 
   return (
-    <div className={`${sizes[size]} rounded-lg overflow-hidden flex-shrink-0 bg-white/5`}>
-      <img src={url} alt={title} onLoad={() => setLoaded(true)}
-        className={`w-full h-full object-cover transition-opacity duration-300 ${loaded ? 'opacity-100' : 'opacity-0'}`} />
+    <div className={`${sizes[size]} rounded-lg overflow-hidden flex-shrink-0`} style={{ background: bg }}>
+      <img
+        src={url}
+        alt={title}
+        onLoad={() => setLoaded(true)}
+        onError={() => setUrl(null)}
+        className={`w-full h-full object-cover transition-opacity duration-300 ${loaded ? 'opacity-100' : 'opacity-0'}`}
+      />
     </div>
   );
 }
@@ -197,17 +215,32 @@ function useCountUp(target: number, duration = 1000, delay = 0) {
   return val;
 }
 
+const FAQ = [
+  { q: 'Is there a membership fee?',                   a: 'No. Participation is completely free.' },
+  { q: 'Is there an age restriction?',                  a: 'Yes, the club is 18+.' },
+  { q: 'How often do you meet?',                        a: 'Approximately once every two weeks.' },
+  { q: 'Do you have required reading deadlines?',       a: 'No strict deadlines. Participation is flexible.' },
+  { q: 'What kind of books do you read?',               a: 'All genres. Selections are made collectively by members.' },
+  { q: 'Do I have to finish the book to attend?',       a: 'No. Come even if you haven\'t finished — or haven\'t started.' },
+  { q: 'Do I need to be well-read to join?',            a: 'Not at all. The club is open to everyone regardless of experience.' },
+  { q: 'What language are discussions in?',             a: 'A mix of Kazakh, English, and Russian depending on participants. Foreigners are welcome.' },
+  { q: 'Is it only about reading?',                     a: 'No. It\'s also about community, conversation, and shared experiences.' },
+  { q: 'What if I\'m shy or introverted?',              a: 'That\'s completely fine. You can participate at your own pace.' },
+  { q: 'Are there additional activities?',              a: 'Yes — themed events, discussions, and community activities.' },
+  { q: 'What are the main rules?',                      a: 'Respect, openness, and a comfortable environment for everyone.' },
+];
+
 // ── HOME ──────────────────────────────────────────────────────────────────────
 function HomePage({ onNav, allEvents, allBooks }: {
   onNav: (p: Page) => void; allEvents: BookEvent[]; allBooks: Book[];
 }) {
   const finished = allEvents.filter(e => e.status === 'past').length;
   const votes    = allEvents.flatMap(e => e.votingOptions ?? []).reduce((s, o) => s + o.votes, 0);
-  const [scrollY, setScrollY] = useState(0);
-  const [hoveredBook, setHoveredBook] = useState<string | null>(null);
-  const nBooks  = useCountUp(allBooks.length, 900, 300);
-  const nRead   = useCountUp(finished, 900, 400);
-  const nVotes  = useCountUp(votes, 900, 500);
+  const [scrollY, setScrollY]   = useState(0);
+  const [openFaq, setOpenFaq]   = useState<number | null>(null);
+  const nBooks = useCountUp(allBooks.length, 900, 300);
+  const nRead  = useCountUp(finished, 900, 400);
+  const nVotes = useCountUp(votes, 900, 500);
 
   useEffect(() => {
     const h = () => setScrollY(window.scrollY);
@@ -217,48 +250,45 @@ function HomePage({ onNav, allEvents, allBooks }: {
 
   return (
     <div className="pb-16">
-      {/* ── Hero — full-width, generous breathing room ── */}
+
+      {/* ── Hero ── */}
       <div className="pt-10 pb-16 border-b border-white/6">
-        <motion.div
-          style={{ y: scrollY * -0.08 }}
-          className="mb-8 inline-block">
-          <img
-            src="/serinclublogo.jpg"
-            alt="Sërin"
-            className="w-20 h-20 rounded-2xl object-cover"
-          />
+        {/* Logo — overflow:hidden clips the jpg to the rounded corners, no bg bleed */}
+        <motion.div style={{ y: scrollY * -0.08 }} className="mb-8 inline-block">
+          <div className="w-20 h-20 rounded-2xl overflow-hidden">
+            <img src="/serinclublogo.jpg" alt="Sërin" className="w-full h-full object-cover block" />
+          </div>
         </motion.div>
 
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.55 }}>
-          <h1 className="font-display text-6xl text-white leading-none tracking-tight mb-4">
-            Sërin
-          </h1>
-          <p className="text-white/50 text-lg leading-relaxed max-w-sm mb-10">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+          <h1 className="font-display text-6xl text-white leading-none tracking-tight mb-4">Sërin</h1>
+          <p className="text-white/45 text-lg leading-relaxed max-w-xs mb-10">
             A book community across Astana's universities — where reading is social, slow, and honest.
           </p>
-          <button
-            onClick={() => onNav('events')}
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-amber-500 text-[#0a1830] rounded-full text-sm font-semibold hover:bg-amber-400 active:scale-95 transition-all">
-            See what we're reading <ArrowRight className="w-4 h-4" />
-          </button>
+          <div className="flex items-center gap-4">
+            <button onClick={() => onNav('events')}
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-amber-500 text-[#0a1830] rounded-full text-sm font-semibold hover:bg-amber-400 active:scale-95 transition-all">
+              See what we're reading <ArrowRight className="w-4 h-4" />
+            </button>
+            <a href="https://taplink.cc/serin" target="_blank" rel="noopener noreferrer"
+              className="text-sm text-white/30 hover:text-amber-400 transition-colors">
+              taplink ↗
+            </a>
+          </div>
         </motion.div>
       </div>
 
-      {/* ── Three lines of truth ── */}
-      <motion.div
-        initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}
+      {/* ── Three pillars ── */}
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}
         className="py-14 border-b border-white/6 space-y-8">
         {[
-          { num: '01', title: 'One book, everyone reads', body: 'Every event, the whole community picks one book together. No lectures, no tests — just the same pages, different minds.' },
+          { num: '01', title: 'One book, everyone reads',  body: 'Every event, the whole community picks one book together. No lectures, no tests — just the same pages, different minds.' },
           { num: '02', title: 'You vote on what\'s next',  body: 'Suggest books, cast your vote, see what wins. The next read is always a collective decision.' },
           { num: '03', title: 'Show up as you are',        body: 'No deadlines. No correct taste. Read slow, read weird, or just come for the conversation. Everyone belongs here.' },
         ].map(({ num, title, body }, i) => (
-          <motion.div
-            key={num}
-            initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.25 + i * 0.1 }}
+          <motion.div key={num} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 + i * 0.1 }}
             className="flex gap-6">
-            <span className="font-mono text-[11px] text-amber-400/40 pt-0.5 flex-shrink-0 w-6">{num}</span>
+            <span className="font-mono text-[11px] text-amber-400/30 pt-0.5 flex-shrink-0 w-6">{num}</span>
             <div>
               <p className="font-semibold text-white mb-1">{title}</p>
               <p className="text-white/35 text-sm leading-relaxed">{body}</p>
@@ -268,15 +298,10 @@ function HomePage({ onNav, allEvents, allBooks }: {
       </motion.div>
 
       {/* ── Stats ── */}
-      <motion.div
-        initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.35 }}
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}
         className="py-14 border-b border-white/6">
         <div className="grid grid-cols-3 gap-8 text-center">
-          {[
-            { val: nBooks, label: 'On the list' },
-            { val: nRead,  label: 'Books read' },
-            { val: nVotes, label: 'Votes cast' },
-          ].map(({ val, label }) => (
+          {[{ val: nBooks, label: 'On the list' }, { val: nRead, label: 'Books read' }, { val: nVotes, label: 'Votes cast' }].map(({ val, label }) => (
             <div key={label}>
               <p className="font-display text-4xl text-amber-400 leading-none">{val}</p>
               <p className="text-white/25 text-xs mt-2 uppercase tracking-wider">{label}</p>
@@ -285,61 +310,106 @@ function HomePage({ onNav, allEvents, allBooks }: {
         </div>
       </motion.div>
 
-      {/* ── Book shelf ── */}
-      {allBooks.length > 0 && (
-        <motion.div
-          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.45 }}
-          className="pt-14">
-          <p className="text-[10px] uppercase tracking-widest text-white/20 font-semibold mb-5">Currently on the list</p>
-          <div className="flex gap-3 overflow-x-auto pb-3 scrollbar-none -mx-5 px-5">
-            {allBooks.slice(0, 12).map((book, i) => (
-              <motion.div
-                key={book.id}
-                initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5 + i * 0.04 }}
-                className="relative flex-shrink-0"
-                onMouseEnter={() => setHoveredBook(book.id!)}
-                onMouseLeave={() => setHoveredBook(null)}>
-                <motion.div
-                  whileHover={{ y: -5, scale: 1.04 }}
-                  transition={{ type: 'spring', stiffness: 360, damping: 22 }}>
-                  <BookCover title={book.title} author={book.author} size="lg" />
-                </motion.div>
-                <AnimatePresence>
-                  {hoveredBook === book.id && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-                      transition={{ duration: 0.1 }}
-                      className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2.5 z-30 pointer-events-none min-w-max">
-                      <div className="bg-[#0f1f45] border border-white/12 rounded-xl px-3 py-2 shadow-2xl">
-                        <p className="text-white text-xs font-semibold">{book.title}</p>
-                        <p className="text-white/35 text-[10px]">{book.author}</p>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </motion.div>
-            ))}
-          </div>
-        </motion.div>
-      )}
+      {/* ── Campus cards ── */}
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.35 }}
+        className="py-14 border-b border-white/6">
+        <p className="text-[10px] uppercase tracking-widest text-white/20 font-semibold mb-6">Campuses</p>
+        <div className="space-y-4">
+          {[
+            {
+              name: 'Nazarbayev University',
+              tag: 'NU',
+              est: 'est. 16 Apr 2026',
+              links: [
+                { label: 'Instagram', href: 'https://www.instagram.com/serinlabs' },
+                { label: 'serin@nu.edu.kz', href: 'mailto:serin@nu.edu.kz' },
+              ],
+            },
+            {
+              name: 'Astana IT University',
+              tag: 'AITU',
+              est: 'est. 30 Apr 2026',
+              links: [
+                { label: 'Instagram', href: 'https://www.instagram.com/aituserin' },
+                { label: 'Telegram', href: 'https://t.me/bookmateAITU' },
+              ],
+            },
+            {
+              name: 'Astana Medical University',
+              tag: 'AMU',
+              est: 'est. 22 Apr 2026',
+              links: [
+                { label: 'Instagram', href: 'https://www.instagram.com/muaserin' },
+              ],
+            },
+          ].map((campus, i) => (
+            <motion.div key={campus.tag}
+              initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 + i * 0.08 }}
+              className="flex items-start justify-between gap-4 py-4 border-b border-white/5 last:border-0">
+              <div>
+                <div className="flex items-center gap-2 mb-0.5">
+                  <span className="text-[10px] font-mono font-bold text-amber-400/60 uppercase tracking-wider">{campus.tag}</span>
+                  <span className="text-[10px] text-white/20">{campus.est}</span>
+                </div>
+                <p className="text-white/70 text-sm font-medium">Sërin at {campus.name}</p>
+              </div>
+              <div className="flex flex-col items-end gap-1">
+                {campus.links.map(l => (
+                  <a key={l.label} href={l.href} target="_blank" rel="noopener noreferrer"
+                    className="text-xs text-white/25 hover:text-amber-400 transition-colors">
+                    {l.label} ↗
+                  </a>
+                ))}
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </motion.div>
 
-      {/* ── Social links — at the bottom, not crammed at top ── */}
-      <motion.div
-        initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}
-        className="pt-14 flex items-center gap-6 flex-wrap">
+      {/* ── FAQ ── */}
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }}
+        className="py-14 border-b border-white/6">
+        <p className="text-[10px] uppercase tracking-widest text-white/20 font-semibold mb-6">FAQ</p>
+        <div className="space-y-0">
+          {FAQ.map(({ q, a }, i) => (
+            <div key={i} className="border-b border-white/5 last:border-0">
+              <button
+                onClick={() => setOpenFaq(openFaq === i ? null : i)}
+                className="w-full flex items-center justify-between py-4 text-left gap-4 group">
+                <span className="text-sm text-white/60 group-hover:text-white transition-colors">{q}</span>
+                <motion.span
+                  animate={{ rotate: openFaq === i ? 45 : 0 }}
+                  transition={{ duration: 0.15 }}
+                  className="text-white/20 group-hover:text-amber-400 transition-colors flex-shrink-0 text-lg leading-none">
+                  +
+                </motion.span>
+              </button>
+              <AnimatePresence>
+                {openFaq === i && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="overflow-hidden">
+                    <p className="text-white/35 text-sm leading-relaxed pb-4">{a}</p>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          ))}
+        </div>
+      </motion.div>
+
+      {/* ── Footer links ── */}
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.45 }}
+        className="pt-10 flex items-center gap-6 flex-wrap">
         <a href="https://www.instagram.com/aituserin" target="_blank" rel="noopener noreferrer"
-          className="text-sm text-white/30 hover:text-amber-400 transition-colors">
-          Instagram ↗
-        </a>
+          className="text-sm text-white/20 hover:text-amber-400 transition-colors">Instagram ↗</a>
         <a href="https://t.me/+GjXC-aQ_TbcxMTE6" target="_blank" rel="noopener noreferrer"
-          className="text-sm text-white/30 hover:text-amber-400 transition-colors">
-          Telegram ↗
-        </a>
+          className="text-sm text-white/20 hover:text-amber-400 transition-colors">Telegram ↗</a>
         <a href="https://taplink.cc/serin" target="_blank" rel="noopener noreferrer"
-          className="text-sm text-white/30 hover:text-amber-400 transition-colors">
-          All links ↗
-        </a>
+          className="text-sm text-white/20 hover:text-amber-400 transition-colors">All links ↗</a>
       </motion.div>
     </div>
   );
