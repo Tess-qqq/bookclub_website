@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Calendar, BarChart3, Home, ChevronRight,
@@ -178,6 +178,37 @@ function EventModal({ event, onClose }: { event: BookEvent; onClose: () => void 
   );
 }
 
+// ── Count-up hook ─────────────────────────────────────────────────────────────
+function useCountUp(target: number, duration = 1000, delay = 0) {
+  const [val, setVal] = useState(0);
+  useEffect(() => {
+    if (target === 0) return;
+    const timer = setTimeout(() => {
+      const start = performance.now();
+      const tick = (now: number) => {
+        const p = Math.min((now - start) / duration, 1);
+        const ease = 1 - Math.pow(1 - p, 3);
+        setVal(Math.round(ease * target));
+        if (p < 1) requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    }, delay);
+    return () => clearTimeout(timer);
+  }, [target, duration, delay]);
+  return val;
+}
+
+// ── Stat tile with count-up ───────────────────────────────────────────────────
+function StatTile({ n, label, delay }: { n: number; label: string; delay: number }) {
+  const val = useCountUp(n, 900, delay);
+  return (
+    <div className="rounded-2xl border border-white/8 bg-white/4 py-5 text-center">
+      <p className="font-display text-3xl text-amber-400">{val}</p>
+      <p className="text-white/30 text-xs mt-1">{label}</p>
+    </div>
+  );
+}
+
 // ── HOME ──────────────────────────────────────────────────────────────────────
 function HomePage({ onNav, allEvents, allBooks }: {
   onNav: (p: Page) => void; allEvents: BookEvent[]; allBooks: Book[];
@@ -185,47 +216,92 @@ function HomePage({ onNav, allEvents, allBooks }: {
   const active   = allEvents.find(e => e.status === 'active' || e.status === 'voting');
   const finished = allEvents.filter(e => e.status === 'past').length;
   const votes    = allEvents.flatMap(e => e.votingOptions ?? []).reduce((s, o) => s + o.votes, 0);
+  const [scrollY, setScrollY] = useState(0);
+  const [hoveredBook, setHoveredBook] = useState<string | null>(null);
+
+  useEffect(() => {
+    const onScroll = () => setScrollY(window.scrollY);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   return (
     <div className="space-y-10 pb-8">
       {/* Hero */}
       <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-        <div className="flex items-center gap-4 mb-6">
-          <img src="/serinclublogo.jpg" alt="Sërin"
-            className="w-[72px] h-[72px] rounded-2xl object-cover shadow-lg shadow-black/40 flex-shrink-0" />
+        {/* Logo with parallax — moves up slightly as you scroll */}
+        <div className="flex items-center gap-5 mb-7">
+          <motion.div
+            style={{ y: scrollY * -0.12 }}
+            className="relative flex-shrink-0">
+            {/* Fix: ring is just the image itself, no background bleed */}
+            <img
+              src="/serinclublogo.jpg"
+              alt="Sërin"
+              className="w-[76px] h-[76px] rounded-[22px] object-cover block"
+              style={{ imageRendering: 'auto' }}
+            />
+          </motion.div>
           <div>
-            <h1 className="font-display text-[2.6rem] leading-none text-white">Sërin</h1>
-            <p className="text-amber-400/70 text-sm mt-0.5">Family Book Club</p>
+            <h1 className="font-display text-[2.8rem] leading-none text-white tracking-tight">Sërin</h1>
+            <p className="text-amber-400/60 text-sm mt-1 font-medium">Family Book Club · Astana</p>
           </div>
         </div>
-        <p className="text-white/45 leading-relaxed max-w-md">
-          One book at a time, across three campuses — AMU, AITU, and NU reading together in Astana.
-        </p>
-        <div className="flex gap-2.5 mt-6 flex-wrap">
+
+        {/* Rebrand text */}
+        <div className="space-y-3 mb-7">
+          <p className="text-white/70 leading-relaxed text-[0.95rem]">
+            We rebranded AITU Book Club — now it's <span className="text-amber-400 font-semibold">Sërin</span>, a reading community across AMU, AITU, and NU. Same idea, bigger energy.
+          </p>
+          <div className="space-y-2 pl-4 border-l-2 border-amber-500/30">
+            {[
+              'Biweekly meetups on campus',
+              'Real conversations, new people',
+              'Events you won\'t want to miss',
+            ].map((item, i) => (
+              <motion.p
+                key={item}
+                initial={{ opacity: 0, x: -8 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.2 + i * 0.08 }}
+                className="text-white/50 text-sm flex items-center gap-2">
+                <span className="w-1 h-1 rounded-full bg-amber-400/60 flex-shrink-0" />
+                {item}
+              </motion.p>
+            ))}
+          </div>
+          <p className="text-white/40 text-sm leading-relaxed">
+            No deadlines, no pressure, no "correct taste." Read slow, read weird, or just show up. You're welcome here.
+          </p>
+        </div>
+
+        {/* CTAs */}
+        <div className="flex gap-2 flex-wrap">
           <button onClick={() => onNav('events')}
-            className="flex items-center gap-1.5 px-4 py-2 bg-amber-500 text-[#0a1830] rounded-full text-sm font-semibold hover:bg-amber-400 transition-colors">
+            className="flex items-center gap-1.5 px-4 py-2 bg-amber-500 text-[#0a1830] rounded-full text-sm font-semibold hover:bg-amber-400 active:scale-95 transition-all">
             See events <ArrowRight className="w-3.5 h-3.5" />
           </button>
-          <button onClick={() => onNav('books')}
-            className="flex items-center gap-1.5 px-4 py-2 bg-white/8 text-white/70 rounded-full text-sm font-medium hover:bg-white/12 transition-colors border border-white/10">
-            Reading list
-          </button>
+          <a href="https://www.instagram.com/aituserin" target="_blank" rel="noopener noreferrer"
+            className="flex items-center gap-1.5 px-4 py-2 bg-white/8 text-white/60 rounded-full text-sm font-medium hover:bg-white/14 hover:text-white active:scale-95 transition-all border border-white/10">
+            Instagram
+          </a>
+          <a href="https://taplink.cc/serin" target="_blank" rel="noopener noreferrer"
+            className="flex items-center gap-1.5 px-4 py-2 bg-white/8 text-white/60 rounded-full text-sm font-medium hover:bg-white/14 hover:text-white active:scale-95 transition-all border border-white/10">
+            All links
+          </a>
+          <a href="https://t.me/+GjXC-aQ_TbcxMTE6" target="_blank" rel="noopener noreferrer"
+            className="flex items-center gap-1.5 px-4 py-2 bg-sky-500/15 text-sky-300 rounded-full text-sm font-medium hover:bg-sky-500/25 active:scale-95 transition-all border border-sky-500/20">
+            Telegram chat
+          </a>
         </div>
       </motion.div>
 
-      {/* Numbers */}
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.12 }}
+      {/* Count-up stats */}
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.15 }}
         className="grid grid-cols-3 gap-3">
-        {[
-          { n: finished,       label: 'Books finished' },
-          { n: allBooks.length, label: 'On the list' },
-          { n: votes,          label: 'Votes cast' },
-        ].map(({ n, label }) => (
-          <div key={label} className="rounded-2xl border border-white/8 bg-white/4 py-5 text-center">
-            <p className="font-display text-3xl text-amber-400">{n}</p>
-            <p className="text-white/30 text-xs mt-1">{label}</p>
-          </div>
-        ))}
+        <StatTile n={finished}        label="Books read"   delay={200} />
+        <StatTile n={allBooks.length} label="On the list"  delay={300} />
+        <StatTile n={votes}           label="Votes cast"   delay={400} />
       </motion.div>
 
       {/* Active event */}
@@ -253,17 +329,38 @@ function HomePage({ onNav, allEvents, allBooks }: {
         </motion.div>
       )}
 
-      {/* What we do — removed boring intro, replaced with recent books shelf */}
+      {/* Book shelf with hover tooltips */}
       {allBooks.length > 0 && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.28 }}>
-          <p className="text-[10px] uppercase tracking-widest text-white/25 font-semibold mb-3">On the list</p>
-          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none">
-            {allBooks.slice(0, 8).map((book, i) => (
-              <motion.div key={book.id}
-                initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3 + i * 0.05 }}
-                className="flex-shrink-0 w-16 cursor-default"
-                title={`${book.title} — ${book.author}`}>
-                <BookCover title={book.title} author={book.author} size="lg" />
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}>
+          <p className="text-[10px] uppercase tracking-widest text-white/25 font-semibold mb-3">Reading list</p>
+          <div className="flex gap-2.5 overflow-x-auto pb-3 scrollbar-none">
+            {allBooks.slice(0, 12).map((book, i) => (
+              <motion.div
+                key={book.id}
+                initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.32 + i * 0.04 }}
+                className="relative flex-shrink-0 cursor-default group"
+                onMouseEnter={() => setHoveredBook(book.id!)}
+                onMouseLeave={() => setHoveredBook(null)}>
+                <motion.div
+                  whileHover={{ y: -4, scale: 1.05 }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 20 }}>
+                  <BookCover title={book.title} author={book.author} size="lg" />
+                </motion.div>
+                {/* Tooltip */}
+                <AnimatePresence>
+                  {hoveredBook === book.id && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 4 }}
+                      transition={{ duration: 0.12 }}
+                      className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-30 pointer-events-none">
+                      <div className="bg-[#0a1830] border border-white/15 rounded-xl px-3 py-2 shadow-xl whitespace-nowrap">
+                        <p className="text-white text-xs font-semibold">{book.title}</p>
+                        <p className="text-white/40 text-[10px]">{book.author}</p>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </motion.div>
             ))}
           </div>
