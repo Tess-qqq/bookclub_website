@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Calendar, BarChart3, Home, ChevronRight,
-  X, CheckCircle, BookMarked, ArrowRight, Flame,
+  X, CheckCircle, BookMarked, ArrowRight,
 } from 'lucide-react';
 import { subscribeToBooks, type Book } from './services/bookService';
 import {
@@ -187,8 +187,7 @@ function useCountUp(target: number, duration = 1000, delay = 0) {
       const start = performance.now();
       const tick = (now: number) => {
         const p = Math.min((now - start) / duration, 1);
-        const ease = 1 - Math.pow(1 - p, 3);
-        setVal(Math.round(ease * target));
+        setVal(Math.round((1 - Math.pow(1 - p, 3)) * target));
         if (p < 1) requestAnimationFrame(tick);
       };
       requestAnimationFrame(tick);
@@ -198,165 +197,123 @@ function useCountUp(target: number, duration = 1000, delay = 0) {
   return val;
 }
 
-// ── Stat tile with count-up ───────────────────────────────────────────────────
-function StatTile({ n, label, delay }: { n: number; label: string; delay: number }) {
-  const val = useCountUp(n, 900, delay);
-  return (
-    <div className="rounded-2xl border border-white/8 bg-white/4 py-5 text-center">
-      <p className="font-display text-3xl text-amber-400">{val}</p>
-      <p className="text-white/30 text-xs mt-1">{label}</p>
-    </div>
-  );
-}
-
 // ── HOME ──────────────────────────────────────────────────────────────────────
 function HomePage({ onNav, allEvents, allBooks }: {
   onNav: (p: Page) => void; allEvents: BookEvent[]; allBooks: Book[];
 }) {
-  const active   = allEvents.find(e => e.status === 'active' || e.status === 'voting');
   const finished = allEvents.filter(e => e.status === 'past').length;
   const votes    = allEvents.flatMap(e => e.votingOptions ?? []).reduce((s, o) => s + o.votes, 0);
   const [scrollY, setScrollY] = useState(0);
   const [hoveredBook, setHoveredBook] = useState<string | null>(null);
+  const nBooks  = useCountUp(allBooks.length, 900, 300);
+  const nRead   = useCountUp(finished, 900, 400);
+  const nVotes  = useCountUp(votes, 900, 500);
 
   useEffect(() => {
-    const onScroll = () => setScrollY(window.scrollY);
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
+    const h = () => setScrollY(window.scrollY);
+    window.addEventListener('scroll', h, { passive: true });
+    return () => window.removeEventListener('scroll', h);
   }, []);
 
   return (
-    <div className="space-y-10 pb-8">
-      {/* Hero */}
-      <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-        {/* Logo with parallax — moves up slightly as you scroll */}
-        <div className="flex items-center gap-5 mb-7">
-          <motion.div
-            style={{ y: scrollY * -0.12 }}
-            className="relative flex-shrink-0">
-            {/* Fix: ring is just the image itself, no background bleed */}
-            <img
-              src="/serinclublogo.jpg"
-              alt="Sërin"
-              className="w-[76px] h-[76px] rounded-[22px] object-cover block"
-              style={{ imageRendering: 'auto' }}
-            />
-          </motion.div>
-          <div>
-            <h1 className="font-display text-[2.8rem] leading-none text-white tracking-tight">Sërin</h1>
-            <p className="text-amber-400/60 text-sm mt-1 font-medium">Family Book Club · Astana</p>
-          </div>
-        </div>
-
-        {/* Rebrand text */}
-        <div className="space-y-3 mb-7">
-          <p className="text-white/70 leading-relaxed text-[0.95rem]">
-            We rebranded AITU Book Club — now it's <span className="text-amber-400 font-semibold">Sërin</span>, a reading community across AMU, AITU, and NU. Same idea, bigger energy.
-          </p>
-          <div className="space-y-2 pl-4 border-l-2 border-amber-500/30">
-            {[
-              'Biweekly meetups on campus',
-              'Real conversations, new people',
-              'Events you won\'t want to miss',
-            ].map((item, i) => (
-              <motion.p
-                key={item}
-                initial={{ opacity: 0, x: -8 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.2 + i * 0.08 }}
-                className="text-white/50 text-sm flex items-center gap-2">
-                <span className="w-1 h-1 rounded-full bg-amber-400/60 flex-shrink-0" />
-                {item}
-              </motion.p>
-            ))}
-          </div>
-          <p className="text-white/40 text-sm leading-relaxed">
-            No deadlines, no pressure, no "correct taste." Read slow, read weird, or just show up. You're welcome here.
-          </p>
-        </div>
-
-        {/* CTAs */}
-        <div className="flex gap-2 flex-wrap">
-          <button onClick={() => onNav('events')}
-            className="flex items-center gap-1.5 px-4 py-2 bg-amber-500 text-[#0a1830] rounded-full text-sm font-semibold hover:bg-amber-400 active:scale-95 transition-all">
-            See events <ArrowRight className="w-3.5 h-3.5" />
-          </button>
-          <a href="https://www.instagram.com/aituserin" target="_blank" rel="noopener noreferrer"
-            className="flex items-center gap-1.5 px-4 py-2 bg-white/8 text-white/60 rounded-full text-sm font-medium hover:bg-white/14 hover:text-white active:scale-95 transition-all border border-white/10">
-            Instagram
-          </a>
-          <a href="https://taplink.cc/serin" target="_blank" rel="noopener noreferrer"
-            className="flex items-center gap-1.5 px-4 py-2 bg-white/8 text-white/60 rounded-full text-sm font-medium hover:bg-white/14 hover:text-white active:scale-95 transition-all border border-white/10">
-            All links
-          </a>
-          <a href="https://t.me/+GjXC-aQ_TbcxMTE6" target="_blank" rel="noopener noreferrer"
-            className="flex items-center gap-1.5 px-4 py-2 bg-sky-500/15 text-sky-300 rounded-full text-sm font-medium hover:bg-sky-500/25 active:scale-95 transition-all border border-sky-500/20">
-            Telegram chat
-          </a>
-        </div>
-      </motion.div>
-
-      {/* Count-up stats */}
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.15 }}
-        className="grid grid-cols-3 gap-3">
-        <StatTile n={finished}        label="Books read"   delay={200} />
-        <StatTile n={allBooks.length} label="On the list"  delay={300} />
-        <StatTile n={votes}           label="Votes cast"   delay={400} />
-      </motion.div>
-
-      {/* Active event */}
-      {active && (
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-          <p className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest text-amber-400/50 font-semibold mb-3">
-            <Flame className="w-3 h-3" /> Now
-          </p>
-          <div className="rounded-3xl border border-amber-500/15 bg-gradient-to-br from-amber-500/8 via-transparent to-transparent p-5">
-            <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold border mb-3 ${SC[active.status].pill}`}>
-              <span className={`w-1.5 h-1.5 rounded-full ${SC[active.status].dot}`} />{STATUS_LABELS[active.status]}
-            </span>
-            <div className="flex items-start gap-4">
-              {active.bookTitle && <BookCover title={active.bookTitle} author={active.bookAuthor ?? ''} size="lg" />}
-              <div>
-                <h3 className="font-display text-xl text-white leading-snug">{active.title}</h3>
-                {active.bookTitle && <p className="text-amber-400/60 text-sm mt-0.5">{active.bookTitle} · {active.bookAuthor}</p>}
-                {active.description && <p className="text-white/35 text-sm mt-2 leading-relaxed line-clamp-2">{active.description}</p>}
-              </div>
-            </div>
-            <button onClick={() => onNav('events')} className="mt-4 flex items-center gap-1 text-xs text-amber-400/70 hover:text-amber-400 transition-colors font-medium">
-              All events <ChevronRight className="w-3.5 h-3.5" />
-            </button>
-          </div>
+    <div className="pb-16">
+      {/* ── Hero — full-width, generous breathing room ── */}
+      <div className="pt-10 pb-16 border-b border-white/6">
+        <motion.div
+          style={{ y: scrollY * -0.08 }}
+          className="mb-8 inline-block">
+          <img
+            src="/serinclublogo.jpg"
+            alt="Sërin"
+            className="w-20 h-20 rounded-2xl object-cover"
+          />
         </motion.div>
-      )}
 
-      {/* Book shelf with hover tooltips */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.55 }}>
+          <h1 className="font-display text-6xl text-white leading-none tracking-tight mb-4">
+            Sërin
+          </h1>
+          <p className="text-white/50 text-lg leading-relaxed max-w-sm mb-10">
+            A book community across Astana's universities — where reading is social, slow, and honest.
+          </p>
+          <button
+            onClick={() => onNav('events')}
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-amber-500 text-[#0a1830] rounded-full text-sm font-semibold hover:bg-amber-400 active:scale-95 transition-all">
+            See what we're reading <ArrowRight className="w-4 h-4" />
+          </button>
+        </motion.div>
+      </div>
+
+      {/* ── Three lines of truth ── */}
+      <motion.div
+        initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}
+        className="py-14 border-b border-white/6 space-y-8">
+        {[
+          { num: '01', title: 'One book, everyone reads', body: 'Every event, the whole community picks one book together. No lectures, no tests — just the same pages, different minds.' },
+          { num: '02', title: 'You vote on what\'s next',  body: 'Suggest books, cast your vote, see what wins. The next read is always a collective decision.' },
+          { num: '03', title: 'Show up as you are',        body: 'No deadlines. No correct taste. Read slow, read weird, or just come for the conversation. Everyone belongs here.' },
+        ].map(({ num, title, body }, i) => (
+          <motion.div
+            key={num}
+            initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.25 + i * 0.1 }}
+            className="flex gap-6">
+            <span className="font-mono text-[11px] text-amber-400/40 pt-0.5 flex-shrink-0 w-6">{num}</span>
+            <div>
+              <p className="font-semibold text-white mb-1">{title}</p>
+              <p className="text-white/35 text-sm leading-relaxed">{body}</p>
+            </div>
+          </motion.div>
+        ))}
+      </motion.div>
+
+      {/* ── Stats ── */}
+      <motion.div
+        initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.35 }}
+        className="py-14 border-b border-white/6">
+        <div className="grid grid-cols-3 gap-8 text-center">
+          {[
+            { val: nBooks, label: 'On the list' },
+            { val: nRead,  label: 'Books read' },
+            { val: nVotes, label: 'Votes cast' },
+          ].map(({ val, label }) => (
+            <div key={label}>
+              <p className="font-display text-4xl text-amber-400 leading-none">{val}</p>
+              <p className="text-white/25 text-xs mt-2 uppercase tracking-wider">{label}</p>
+            </div>
+          ))}
+        </div>
+      </motion.div>
+
+      {/* ── Book shelf ── */}
       {allBooks.length > 0 && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}>
-          <p className="text-[10px] uppercase tracking-widest text-white/25 font-semibold mb-3">Reading list</p>
-          <div className="flex gap-2.5 overflow-x-auto pb-3 scrollbar-none">
+        <motion.div
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.45 }}
+          className="pt-14">
+          <p className="text-[10px] uppercase tracking-widest text-white/20 font-semibold mb-5">Currently on the list</p>
+          <div className="flex gap-3 overflow-x-auto pb-3 scrollbar-none -mx-5 px-5">
             {allBooks.slice(0, 12).map((book, i) => (
               <motion.div
                 key={book.id}
-                initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.32 + i * 0.04 }}
-                className="relative flex-shrink-0 cursor-default group"
+                initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5 + i * 0.04 }}
+                className="relative flex-shrink-0"
                 onMouseEnter={() => setHoveredBook(book.id!)}
                 onMouseLeave={() => setHoveredBook(null)}>
                 <motion.div
-                  whileHover={{ y: -4, scale: 1.05 }}
-                  transition={{ type: 'spring', stiffness: 400, damping: 20 }}>
+                  whileHover={{ y: -5, scale: 1.04 }}
+                  transition={{ type: 'spring', stiffness: 360, damping: 22 }}>
                   <BookCover title={book.title} author={book.author} size="lg" />
                 </motion.div>
-                {/* Tooltip */}
                 <AnimatePresence>
                   {hoveredBook === book.id && (
                     <motion.div
-                      initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 4 }}
-                      transition={{ duration: 0.12 }}
-                      className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-30 pointer-events-none">
-                      <div className="bg-[#0a1830] border border-white/15 rounded-xl px-3 py-2 shadow-xl whitespace-nowrap">
+                      initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+                      transition={{ duration: 0.1 }}
+                      className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2.5 z-30 pointer-events-none min-w-max">
+                      <div className="bg-[#0f1f45] border border-white/12 rounded-xl px-3 py-2 shadow-2xl">
                         <p className="text-white text-xs font-semibold">{book.title}</p>
-                        <p className="text-white/40 text-[10px]">{book.author}</p>
+                        <p className="text-white/35 text-[10px]">{book.author}</p>
                       </div>
                     </motion.div>
                   )}
@@ -366,6 +323,24 @@ function HomePage({ onNav, allEvents, allBooks }: {
           </div>
         </motion.div>
       )}
+
+      {/* ── Social links — at the bottom, not crammed at top ── */}
+      <motion.div
+        initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}
+        className="pt-14 flex items-center gap-6 flex-wrap">
+        <a href="https://www.instagram.com/aituserin" target="_blank" rel="noopener noreferrer"
+          className="text-sm text-white/30 hover:text-amber-400 transition-colors">
+          Instagram ↗
+        </a>
+        <a href="https://t.me/+GjXC-aQ_TbcxMTE6" target="_blank" rel="noopener noreferrer"
+          className="text-sm text-white/30 hover:text-amber-400 transition-colors">
+          Telegram ↗
+        </a>
+        <a href="https://taplink.cc/serin" target="_blank" rel="noopener noreferrer"
+          className="text-sm text-white/30 hover:text-amber-400 transition-colors">
+          All links ↗
+        </a>
+      </motion.div>
     </div>
   );
 }
