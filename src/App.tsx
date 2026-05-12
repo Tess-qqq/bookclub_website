@@ -10,7 +10,6 @@ import {
   subscribeToEvents, castVote, getUserVote,
   type BookEvent, type EventStatus,
 } from './services/eventService';
-import * as React from "react";
 
 const UNIVERSITIES = [
   { id: 'AMU', name: 'AMU', fullName: 'Astana Medical University', color: 'from-blue-900' },
@@ -153,11 +152,12 @@ function HomePage({ onNavigate, allEvents, allBooks }: {
       <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}
         className="relative pt-8 pb-12">
         <div className="absolute inset-0 bg-gradient-to-br from-amber-500/10 via-transparent to-transparent rounded-3xl pointer-events-none" />
-        <div className="flex items-start gap-5 mb-8">
-          <img src="/serinclublogo.jpg" alt="Sërin" className="w-16 h-16 rounded-2xl object-cover shadow-lg shadow-amber-500/20 flex-shrink-0" />
+        <div className="flex items-center gap-5 mb-8">
+          <img src="/serinclublogo.jpg" alt="Sërin" className="w-20 h-20 rounded-3xl object-cover shadow-xl shadow-amber-500/20 flex-shrink-0" />
           <div>
+            <p className="text-amber-400/70 text-xs uppercase tracking-widest font-semibold mb-1">AMU · AITU · NU</p>
             <h1 className="font-display text-5xl text-white leading-none">Sërin</h1>
-            <p className="text-amber-400 font-medium mt-1">Family Book Club</p>
+            <p className="text-white/40 font-medium mt-1">Family Book Club</p>
           </div>
         </div>
         <p className="text-white/60 text-lg leading-relaxed max-w-lg">
@@ -170,7 +170,7 @@ function HomePage({ onNavigate, allEvents, allBooks }: {
           </button>
           <button onClick={() => onNavigate('nominations')}
             className="flex items-center gap-2 px-5 py-2.5 bg-white/10 text-white rounded-full text-sm font-medium hover:bg-white/15 transition-colors border border-white/10">
-            Nominate a Book
+            Browse Reading List
           </button>
         </div>
       </motion.div>
@@ -180,7 +180,7 @@ function HomePage({ onNavigate, allEvents, allBooks }: {
         className="grid grid-cols-3 gap-4">
         {[
           { label: 'Books Read', value: allEvents.filter(e => e.status === 'past').length, icon: BookMarked },
-          { label: 'Nominations', value: totalBooks, icon: Star },
+          { label: 'On the List', value: totalBooks, icon: Star },
           { label: 'Votes Cast', value: totalVotes, icon: Users },
         ].map(({ label, value, icon: Icon }) => (
           <div key={label} className="bg-white/5 border border-white/10 rounded-2xl p-4 text-center">
@@ -304,7 +304,7 @@ function EventsPage({ events, loading, onSelect, activeUni, setActiveUni }: {
   );
 }
 
-// ── STATS PAGE ────────────────────────────────────────────────────────────────
+// ── ACTIVITY PAGE ─────────────────────────────────────────────────────────────
 function StatsPage({ allEvents, allBooks }: { allEvents: BookEvent[]; allBooks: Book[] }) {
   const past = allEvents.filter(e => e.status === 'past');
   const totalVotes = allEvents.flatMap(e => e.votingOptions ?? []).reduce((s, o) => s + o.votes, 0);
@@ -314,64 +314,70 @@ function StatsPage({ allEvents, allBooks }: { allEvents: BookEvent[]; allBooks: 
     books: allBooks.filter(b => b.uniId === u.id).length,
   }));
   const maxEvents = Math.max(...byUni.map(u => u.events), 1);
+  const mostActive = byUni.reduce((a, b) => a.events >= b.events ? a : b);
 
   return (
-    <div>
-      <div className="mb-8">
-        <h2 className="font-display text-4xl text-white mb-1">Statistics</h2>
-        <p className="text-white/40">Club activity at a glance</p>
+    <div className="space-y-10">
+      <div>
+        <h2 className="font-display text-4xl text-white mb-1">Activity</h2>
+        <p className="text-white/40">How we're doing across campuses</p>
       </div>
 
-      {/* Big numbers */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-10">
-        {[
-          { label: 'Total Events', value: allEvents.length },
-          { label: 'Books Completed', value: past.length },
-          { label: 'Nominations', value: allBooks.length },
-          { label: 'Votes Cast', value: totalVotes },
-        ].map(({ label, value }) => (
-          <div key={label} className="bg-white/5 border border-white/10 rounded-2xl p-5 text-center">
-            <p className="font-display text-3xl text-amber-400">{value}</p>
-            <p className="text-white/40 text-xs mt-1">{label}</p>
+      {/* Highlight card */}
+      {allEvents.length > 0 && (
+        <div className="relative overflow-hidden rounded-3xl border border-amber-500/20 bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-transparent p-7">
+          <div className="absolute top-0 right-0 w-40 h-40 bg-amber-500/5 rounded-full blur-3xl pointer-events-none" />
+          <p className="text-amber-400/60 text-xs uppercase tracking-widest font-semibold mb-3">Most Active Campus</p>
+          <p className="font-display text-3xl text-white">{mostActive.fullName}</p>
+          <p className="text-white/40 text-sm mt-1">{mostActive.events} event{mostActive.events !== 1 ? 's' : ''} · {mostActive.books} books on the list</p>
+        </div>
+      )}
+
+      {/* Campus breakdown */}
+      <div className="space-y-3">
+        <p className="text-xs uppercase tracking-widest text-white/30 font-semibold">Events per campus</p>
+        {byUni.map((u, i) => (
+          <div key={u.id} className="flex items-center gap-4">
+            <span className="text-sm font-semibold text-white/60 w-10 flex-shrink-0">{u.name}</span>
+            <div className="flex-1 h-8 bg-white/5 rounded-xl overflow-hidden relative border border-white/5">
+              <motion.div
+                initial={{ width: 0 }}
+                animate={{ width: `${(u.events / maxEvents) * 100}%` }}
+                transition={{ duration: 0.7, delay: i * 0.1, ease: 'easeOut' }}
+                className="absolute inset-y-0 left-0 bg-amber-500/30 border-r border-amber-500/40"
+              />
+              <span className="absolute inset-0 flex items-center px-3 text-xs font-mono text-amber-400">
+                {u.events} event{u.events !== 1 ? 's' : ''}
+              </span>
+            </div>
           </div>
         ))}
       </div>
 
-      {/* Per campus bars */}
-      <div className="bg-white/5 border border-white/10 rounded-2xl p-6 mb-6">
-        <p className="text-[11px] uppercase tracking-widest text-white/30 font-semibold mb-5">Events by Campus</p>
-        <div className="space-y-4">
-          {byUni.map(u => (
-            <div key={u.id}>
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="text-sm text-white/70 font-medium">{u.name}</span>
-                <span className="text-sm font-mono text-amber-400">{u.events}</span>
-              </div>
-              <div className="h-2 bg-white/10 rounded-full overflow-hidden">
-                <motion.div initial={{ width: 0 }} animate={{ width: `${(u.events / maxEvents) * 100}%` }}
-                  transition={{ duration: 0.8, ease: 'easeOut' }}
-                  className="h-full bg-amber-500 rounded-full" />
-              </div>
-            </div>
-          ))}
-        </div>
+      {/* Four numbers, clean */}
+      <div className="grid grid-cols-2 gap-3">
+        {[
+          { n: allEvents.length, label: 'Events total' },
+          { n: past.length, label: 'Completed' },
+          { n: allBooks.length, label: 'Books on list' },
+          { n: totalVotes, label: 'Votes cast' },
+        ].map(({ n, label }) => (
+          <div key={label} className="rounded-2xl border border-white/10 bg-white/5 px-5 py-4 flex items-baseline gap-3">
+            <span className="font-display text-4xl text-amber-400">{n}</span>
+            <span className="text-white/40 text-sm">{label}</span>
+          </div>
+        ))}
       </div>
 
-      {/* Status breakdown */}
-      <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
-        <p className="text-[11px] uppercase tracking-widest text-white/30 font-semibold mb-5">Event Status Breakdown</p>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {(['active', 'voting', 'upcoming', 'past'] as EventStatus[]).map(status => {
-            const count = allEvents.filter(e => e.status === status).length;
-            const sc = STATUS_COLORS[status];
-            return (
-              <div key={status} className={`rounded-xl p-4 text-center ${sc.bg}`}>
-                <p className={`text-2xl font-display ${sc.text}`}>{count}</p>
-                <p className={`text-[11px] mt-0.5 ${sc.text} opacity-70`}>{STATUS_LABELS[status]}</p>
-              </div>
-            );
-          })}
-        </div>
+      {/* Reading List breakdown */}
+      <div className="space-y-3">
+        <p className="text-xs uppercase tracking-widest text-white/30 font-semibold">Reading list by campus</p>
+        {byUni.map(u => (
+          <div key={u.id} className="flex items-center justify-between py-3 border-b border-white/5">
+            <span className="text-white/60 text-sm">{u.fullName}</span>
+            <span className="text-amber-400 text-sm font-mono">{u.books} book{u.books !== 1 ? 's' : ''}</span>
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -384,8 +390,8 @@ function NominationsPage({ books, loading, activeUni, setActiveUni }: {
   return (
     <div>
       <div className="mb-8">
-        <h2 className="font-display text-4xl text-white mb-1">Nominations</h2>
-        <p className="text-white/40">Books members want to read next</p>
+        <h2 className="font-display text-4xl text-white mb-1">Reading List</h2>
+        <p className="text-white/40">Books members want to read</p>
       </div>
       <div className="flex gap-1 p-1 bg-white/5 rounded-2xl mb-8 w-fit border border-white/10">
         {UNIVERSITIES.map(uni => (
@@ -421,7 +427,7 @@ function NominationsPage({ books, loading, activeUni, setActiveUni }: {
             <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }}
               className="py-20 text-center border border-dashed border-white/10 rounded-3xl">
               <Star className="w-8 h-8 text-white/20 mx-auto mb-3" />
-              <p className="text-white/30 text-sm">No nominations yet for this campus.</p>
+              <p className="text-white/30 text-sm">Nothing on the list yet for this campus.</p>
             </motion.div>
           )}
         </AnimatePresence>
@@ -474,8 +480,8 @@ export default function App() {
   const NAV = [
     { id: 'home', label: 'Home', icon: Home },
     { id: 'events', label: 'Events', icon: Calendar },
-    { id: 'nominations', label: 'Nominations', icon: BookMarked },
-    { id: 'stats', label: 'Stats', icon: BarChart3 },
+    { id: 'nominations', label: 'Reading List', icon: BookMarked },
+    { id: 'stats', label: 'Activity', icon: BarChart3 },
   ] as const;
 
   return (
@@ -484,8 +490,7 @@ export default function App() {
       <header className="sticky top-0 z-10 border-b border-white/10 bg-[#0D1B3E]/90 backdrop-blur-md">
         <div className="max-w-3xl mx-auto px-6 h-14 flex items-center justify-between">
           <button onClick={() => setPage('home')} className="flex items-center gap-2.5">
-            <img src="/serinclublogo.jpg" alt="Sërin" className="w-7 h-7 rounded-lg object-cover" />
-            <span className="font-display text-lg text-white">Sërin</span>
+            <img src="/serinclublogo.jpg" alt="Sërin" className="w-8 h-8 rounded-lg object-cover" />
           </button>
           <nav className="hidden sm:flex items-center gap-1">
             {NAV.map(({ id, label }) => (
