@@ -10,6 +10,7 @@ import {
   subscribeToEvents, castVote, getUserVote,
   type BookEvent, type EventStatus,
 } from './services/eventService';
+import * as React from "react";
 
 const UNIVERSITIES = [
   { id: 'AMU', name: 'AMU', fullName: 'Astana Medical University', color: 'from-blue-900' },
@@ -153,7 +154,7 @@ function HomePage({ onNavigate, allEvents, allBooks }: {
         className="relative pt-8 pb-12">
         <div className="absolute inset-0 bg-gradient-to-br from-amber-500/10 via-transparent to-transparent rounded-3xl pointer-events-none" />
         <div className="flex items-start gap-5 mb-8">
-          <img src="/logo.jpg" alt="Sërin" className="w-16 h-16 rounded-2xl object-cover shadow-lg shadow-amber-500/20 flex-shrink-0" />
+          <img src="/serinclublogo.jpg" alt="Sërin" className="w-16 h-16 rounded-2xl object-cover shadow-lg shadow-amber-500/20 flex-shrink-0" />
           <div>
             <h1 className="font-display text-5xl text-white leading-none">Sërin</h1>
             <p className="text-amber-400 font-medium mt-1">Family Book Club</p>
@@ -483,7 +484,7 @@ export default function App() {
       <header className="sticky top-0 z-10 border-b border-white/10 bg-[#0D1B3E]/90 backdrop-blur-md">
         <div className="max-w-3xl mx-auto px-6 h-14 flex items-center justify-between">
           <button onClick={() => setPage('home')} className="flex items-center gap-2.5">
-            <img src="/logo.jpg" alt="Sërin" className="w-7 h-7 rounded-lg object-cover" />
+            <img src="/serinclublogo.jpg" alt="Sërin" className="w-7 h-7 rounded-lg object-cover" />
             <span className="font-display text-lg text-white">Sërin</span>
           </button>
           <nav className="hidden sm:flex items-center gap-1">
