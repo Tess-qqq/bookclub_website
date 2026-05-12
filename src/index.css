@@ -31,9 +31,12 @@ body {
 
 /* Scrollbar */
 ::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: #0D1B3E; }
+::-webkit-scrollbar-track { background: #0a1830; }
 ::-webkit-scrollbar-thumb { background: #F5A62360; border-radius: 99px; }
 ::-webkit-scrollbar-thumb:hover { background: #F5A623; }
+
+.scrollbar-none { scrollbar-width: none; }
+.scrollbar-none::-webkit-scrollbar { display: none; }
 
 /* Selection */
 ::selection { background: #F5A623; color: #0D1B3E; }

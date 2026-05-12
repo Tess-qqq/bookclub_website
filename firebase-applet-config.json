@@ -1,10 +1,13 @@
 {
-  "projectId": "gen-lang-client-0174898961",
-  "appId": "1:435822044904:web:ee2acc192dd80fb8624b5d",
-  "apiKey": "AIzaSyAKb5rTMGdD6i8O2-xmTEqHANlxYYfe0-E",
-  "authDomain": "gen-lang-client-0174898961.firebaseapp.com",
-  "firestoreDatabaseId": "ai-studio-0d0adb06-b722-4bb0-8cf7-04549f68e015",
-  "storageBucket": "gen-lang-client-0174898961.firebasestorage.app",
-  "messagingSenderId": "435822044904",
-  "measurementId": ""
+  "apiKey": "AIzaSyB9C_1lqmWrekv_T3xOJX-IXilqsIegnNE",
+
+  "authDomain": "serinbookclub.firebaseapp.com",
+
+  "projectId": "serinbookclub",
+
+  "storageBucket": "serinbookclub.firebasestorage.app",
+
+  "messagingSenderId": "317301786156",
+
+  "appId": "1:317301786156:web:1102b4033dc05d97cdb389"
 }
