@@ -22,11 +22,27 @@ service cloud.firestore {
         && data.createdAt == request.time;
     }
 
+    // Books (unchanged)
     match /books/{bookId} {
       allow list: if true;
-      allow get: if isValidId(bookId);
+      allow get:  if isValidId(bookId);
       allow create: if isValidId(bookId) && isValidBook(incoming());
       allow update, delete: if false;
+    }
+
+    // Events — public read, update only for voting field changes
+    match /events/{eventId} {
+      allow list, get: if true;
+      allow create: if false;   // admin-only via Vercel API route
+      allow delete: if false;   // admin-only via Vercel API route
+      // Allow update only when mutating votingOptions (vote casting), all other fields locked
+      allow update: if
+        incoming().keys().hasAll(['votingOptions'])
+        && incoming().keys().size() == resource.data.keys().size()
+        && incoming().uniId   == resource.data.uniId
+        && incoming().status  == resource.data.status
+        && incoming().title   == resource.data.title
+        && incoming().date    == resource.data.date;
     }
   }
 }

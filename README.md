@@ -1,20 +1,51 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# Sërin Book Club
 
-# Run and deploy your AI Studio app
+Public website for the Sërin reading community across AMU, AITU, and NU in Astana.
 
-This contains everything you need to run your app locally.
+---
 
-View your app in AI Studio: https://ai.studio/apps/0d0adb06-b722-4bb0-8cf7-04549f68e015
+## Stack
 
-## Run Locally
+React + Vite + TypeScript, Tailwind CSS v4, Firebase Firestore, Framer Motion. Deployed on Vercel.
 
-**Prerequisites:**  Node.js
+## Pages
 
+| Page | What it does |
+|------|-------------|
+| Home | Club description, campus info, FAQ |
+| Events | Reading events per campus — vote or leave a review |
+| Books | Reading list per campus |
+| Activity | Stats — events, books, votes |
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+## Event statuses (auto-computed)
+
+| Status | When |
+|--------|------|
+| Voting Open | Before start date, voting enabled |
+| Upcoming | Before start date |
+| Reading Now | Between start and end date |
+| Finished | After end date — reviews section opens automatically |
+
+The `date` field uses `"YYYY-MM-DD"` for single days or `"YYYY-MM-DD|YYYY-MM-DD"` for a range.
+
+## Running locally
+
+```bash
+npm install
+cp .env.example .env.local
+npm run dev
+```
+
+## Firestore collections
+
+```
+books/    { title, author, uniId, createdAt }
+events/   { title, description, date, uniId, bookTitle, bookAuthor,
+            hasVoting, votingOptions[], reviews[], createdAt }
+```
+
+Deploy Firestore rules from `FIRESTORE_RULES.txt` before going live.
+
+---
+
+Admin panel is a separate private repo. Ask club staff for access.
