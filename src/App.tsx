@@ -2,14 +2,13 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Calendar, BarChart3, Home, ChevronRight,
-  X, CheckCircle, BookMarked, ArrowRight,
+  X, CheckCircle, BookMarked, ArrowRight, Send,
 } from 'lucide-react';
 import { subscribeToBooks, type Book } from './services/bookService';
 import {
-  subscribeToEvents, castVote, getUserVote,
+  subscribeToEvents, castVote, getUserVote, postReview,
   type BookEvent, type EventStatus,
 } from './services/eventService';
-import * as React from "react";
 
 const UNIVERSITIES = [
   { id: 'AMU',  name: 'AMU',  fullName: 'Astana Medical University' },
@@ -17,75 +16,37 @@ const UNIVERSITIES = [
   { id: 'NU',   name: 'NU',   fullName: 'Nazarbayev University' },
 ] as const;
 
-type UniId   = (typeof UNIVERSITIES)[number]['id'];
-type Page    = 'home' | 'events' | 'books' | 'activity';
+type UniId = (typeof UNIVERSITIES)[number]['id'];
+type Page  = 'home' | 'events' | 'books' | 'activity';
 
 const STATUS_LABELS: Record<EventStatus, string> = {
   voting: 'Voting Open', upcoming: 'Upcoming', active: 'Reading Now', past: 'Finished',
 };
 const SC: Record<EventStatus, { pill: string; dot: string }> = {
-  voting:   { pill: 'bg-amber-400/15 text-amber-300 border-amber-400/20',   dot: 'bg-amber-400' },
-  upcoming: { pill: 'bg-sky-400/15 text-sky-300 border-sky-400/20',         dot: 'bg-sky-400' },
+  voting:   { pill: 'bg-amber-400/15 text-amber-300 border-amber-400/20',       dot: 'bg-amber-400' },
+  upcoming: { pill: 'bg-sky-400/15 text-sky-300 border-sky-400/20',             dot: 'bg-sky-400' },
   active:   { pill: 'bg-emerald-400/15 text-emerald-300 border-emerald-400/20', dot: 'bg-emerald-400 animate-pulse' },
-  past:     { pill: 'bg-white/5 text-white/30 border-white/10',             dot: 'bg-white/20' },
+  past:     { pill: 'bg-white/5 text-white/30 border-white/10',                 dot: 'bg-white/20' },
 };
 
-// ── Book cover via Google Books ───────────────────────────────────────────────
-const coverCache: Record<string, string | null> = {};
-
-async function fetchCover(title: string, author: string): Promise<string | null> {
-  const key = `${title}__${author}`;
-  if (key in coverCache) return coverCache[key];
-  try {
-    const q = encodeURIComponent(`${title} ${author}`);
-    const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${q}&maxResults=1&fields=items/volumeInfo/imageLinks`);
-    const data = await res.json();
-    const url = data?.items?.[0]?.volumeInfo?.imageLinks?.thumbnail ?? null;
-    coverCache[key] = url ? url.replace('http://', 'https://') : null;
-  } catch {
-    coverCache[key] = null;
-  }
-  return coverCache[key];
-}
-
-function BookCover({ title, author, size = 'md' }: { title: string; author: string; size?: 'sm' | 'md' | 'lg' }) {
-  const [url, setUrl] = useState<string | null | undefined>(undefined); // undefined = loading
-  const [loaded, setLoaded] = useState(false);
-  const sizes = { sm: 'w-10 h-14', md: 'w-12 h-16', lg: 'w-16 h-24' };
-
-  // deterministic pastel color from title
-  const hue = title.split('').reduce((a, c) => a + c.charCodeAt(0), 0) % 360;
-  const bg  = `hsl(${hue},30%,18%)`;
-  const fg  = `hsl(${hue},60%,55%)`;
-
-  useEffect(() => { fetchCover(title, author).then(setUrl); }, [title, author]);
-
-  // loading skeleton
-  if (url === undefined) return (
-    <div className={`${sizes[size]} rounded-lg flex-shrink-0 animate-pulse`} style={{ background: bg }} />
-  );
-
-  // no cover found — nice colored fallback with initials
-  if (!url) return (
-    <div className={`${sizes[size]} rounded-lg flex-shrink-0 flex flex-col items-center justify-center gap-1 px-1`} style={{ background: bg }}>
-      <span className="font-display text-lg leading-none" style={{ color: fg }}>
+// ── Text-only book card — no external API, no images ─────────────────────────
+function BookCard({ title, author, size = 'md' }: { title: string; author: string; size?: 'sm' | 'md' | 'lg' }) {
+  const hue  = title.split('').reduce((a, c) => a + c.charCodeAt(0), 0) % 360;
+  const bg   = `hsl(${hue},22%,15%)`;
+  const acc  = `hsl(${hue},55%,58%)`;
+  const bdr  = `hsl(${hue},28%,22%)`;
+  const dims = { sm: 'w-10 h-14', md: 'w-14 h-20', lg: 'w-16 h-24' };
+  const font = { sm: 16, md: 20, lg: 22 };
+  const txt  = { sm: '8px', md: '9px', lg: '9px' };
+  return (
+    <div className={`${dims[size]} rounded-lg flex-shrink-0 flex flex-col items-center justify-center gap-1 p-1.5 select-none`}
+      style={{ background: bg, border: `1px solid ${bdr}` }}>
+      <span className="font-display leading-none" style={{ color: acc, fontSize: font[size] }}>
         {title.charAt(0)}
       </span>
-      <span className="text-[8px] text-center leading-tight opacity-60 line-clamp-2" style={{ color: fg }}>
-        {title.split(' ').slice(0, 2).join(' ')}
+      <span className="text-center leading-tight line-clamp-3 opacity-70" style={{ color: acc, fontSize: txt[size] }}>
+        {title}
       </span>
-    </div>
-  );
-
-  return (
-    <div className={`${sizes[size]} rounded-lg overflow-hidden flex-shrink-0`} style={{ background: bg }}>
-      <img
-        src={url}
-        alt={title}
-        onLoad={() => setLoaded(true)}
-        onError={() => setUrl(null)}
-        className={`w-full h-full object-cover transition-opacity duration-300 ${loaded ? 'opacity-100' : 'opacity-0'}`}
-      />
     </div>
   );
 }
@@ -120,6 +81,10 @@ function EventModal({ event, onClose }: { event: BookEvent; onClose: () => void 
   const total = opts.reduce((s, o) => s + o.votes, 0);
   const maxV  = Math.max(...opts.map(o => o.votes), 0);
   const sc    = SC[event.status];
+  const [reviewText, setReviewText] = useState('');
+  const [reviewName, setReviewName] = useState('');
+  const [posting, setPosting]       = useState(false);
+  const [reviews, setReviews]       = useState<any[]>(event.reviews ?? []);
 
   const handleVote = async (optionId: string) => {
     if (!event.id || voting) return;
@@ -127,6 +92,19 @@ function EventModal({ event, onClose }: { event: BookEvent; onClose: () => void 
     try { await castVote(event.id, optionId); setUserVote(optionId); }
     catch { alert('Vote failed, try again.'); }
     finally { setVoting(false); }
+  };
+
+  const handleReview = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!event.id || !reviewText.trim()) return;
+    setPosting(true);
+    try {
+      await postReview(event.id, reviewText.trim(), reviewName.trim() || 'Anonymous');
+      const newRev = { id: `rev_${Date.now()}`, text: reviewText.trim(), author: reviewName.trim() || 'Anonymous', createdAt: new Date().toISOString() };
+      setReviews(prev => [...prev, newRev]);
+      setReviewText(''); setReviewName('');
+    } catch { alert('Could not post review.'); }
+    finally { setPosting(false); }
   };
 
   return (
@@ -137,7 +115,7 @@ function EventModal({ event, onClose }: { event: BookEvent; onClose: () => void 
             <span className={`w-1.5 h-1.5 rounded-full ${sc.dot}`} />{STATUS_LABELS[event.status]}
           </span>
           <h2 className="font-display text-2xl text-white leading-snug">{event.title}</h2>
-          <p className="text-white/30 text-xs font-mono mt-1">{event.date}</p>
+          <p className="text-white/30 text-xs font-mono mt-1">{event.date.replace('|', ' → ')}</p>
         </div>
         <button onClick={onClose} className="p-1.5 rounded-xl hover:bg-white/10 text-white/30 hover:text-white transition-colors mt-1">
           <X className="w-4 h-4" />
@@ -148,7 +126,7 @@ function EventModal({ event, onClose }: { event: BookEvent; onClose: () => void 
 
       {event.bookTitle && (
         <div className="flex items-center gap-4 p-4 rounded-2xl bg-amber-500/8 border border-amber-500/15">
-          <BookCover title={event.bookTitle} author={event.bookAuthor ?? ''} size="md" />
+          <BookCard title={event.bookTitle} author={event.bookAuthor ?? ''} size="md" />
           <div>
             <p className="font-semibold text-white">{event.bookTitle}</p>
             <p className="text-amber-400/60 text-sm">{event.bookAuthor}</p>
@@ -174,7 +152,7 @@ function EventModal({ event, onClose }: { event: BookEvent; onClose: () => void 
                   )}
                   <div className="relative flex items-center justify-between gap-2">
                     <div className="flex items-center gap-3">
-                      <BookCover title={opt.title} author={opt.author} size="sm" />
+                      <BookCard title={opt.title} author={opt.author} size="sm" />
                       <div>
                         <p className="font-medium text-sm text-white">{opt.title}</p>
                         <p className="text-white/35 text-xs">{opt.author}</p>
@@ -191,6 +169,44 @@ function EventModal({ event, onClose }: { event: BookEvent; onClose: () => void 
             );
           })}
           {userVote && <p className="text-[10px] text-white/20 text-center pt-1">Tap another option to change your vote</p>}
+        </div>
+      )}
+
+      {/* Reviews — auto-shown when event is finished */}
+      {event.status === 'past' && (
+        <div className="space-y-3 pt-1 border-t border-white/6">
+          <p className="text-[10px] uppercase tracking-widest text-white/25 font-semibold pt-1">
+            Thoughts on this book
+          </p>
+          {reviews.length > 0 ? reviews.map((r: any) => (
+            <div key={r.id} className="p-3 rounded-xl bg-white/3 border border-white/6">
+              <p className="text-white/60 text-sm leading-relaxed">{r.text}</p>
+              <p className="text-white/20 text-[10px] mt-2">{r.author}</p>
+            </div>
+          )) : (
+            <p className="text-white/20 text-xs italic">No thoughts shared yet. Be the first.</p>
+          )}
+          <form onSubmit={handleReview} className="space-y-2 pt-1">
+            <textarea
+              placeholder="What did you think?"
+              value={reviewText}
+              onChange={e => setReviewText(e.target.value)}
+              rows={2}
+              className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-amber-500/40 transition-colors resize-none"
+            />
+            <div className="flex gap-2">
+              <input
+                placeholder="Your name (optional)"
+                value={reviewName}
+                onChange={e => setReviewName(e.target.value)}
+                className="flex-1 px-3 py-2 bg-white/5 border border-white/10 rounded-xl text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-amber-500/40 transition-colors"
+              />
+              <button type="submit" disabled={posting || !reviewText.trim()}
+                className="px-4 py-2 bg-amber-500 text-[#0a1830] rounded-xl text-sm font-semibold hover:bg-amber-400 transition-colors disabled:opacity-30 flex items-center gap-1.5">
+                <Send className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </form>
         </div>
       )}
     </>
@@ -256,8 +272,8 @@ function HomePage({ onNav, allEvents, allBooks }: {
       <div className="pt-10 pb-16 border-b border-white/6">
         {/* Logo — overflow:hidden clips the jpg to the rounded corners, no bg bleed */}
         <motion.div style={{ y: scrollY * -0.08 }} className="mb-8 inline-block">
-          <div className="w-20 h-20 rounded-none overflow-hidden">
-            <img src="/serinclublogo.jpg" alt="Sërin" className="w-full h-full object-contain block" />
+          <div className="w-20 h-20 rounded-2xl overflow-hidden">
+            <img src="/serinclublogo.jpg" alt="Sërin" className="w-full h-full object-cover block" />
           </div>
         </motion.div>
 
@@ -434,7 +450,7 @@ function EventsPage({ events, loading, onSelect, uni, setUni }: {
               onClick={() => onSelect(ev)}
               className="group w-full text-left rounded-2xl border border-white/8 bg-white/4 hover:border-amber-500/30 hover:bg-white/6 transition-all duration-150 p-4">
               <div className="flex items-center gap-4">
-                {ev.bookTitle && <BookCover title={ev.bookTitle} author={ev.bookAuthor ?? ''} size="sm" />}
+                {ev.bookTitle && <BookCard title={ev.bookTitle} author={ev.bookAuthor ?? ''} size="sm" />}
                 <div className="flex-1 min-w-0">
                   <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border mb-1 ${SC[ev.status].pill}`}>
                     <span className={`w-1 h-1 rounded-full ${SC[ev.status].dot}`} />{STATUS_LABELS[ev.status]}
@@ -481,7 +497,7 @@ function BooksPage({ books, loading, uni, setUni }: {
               initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
               transition={{ delay: i * 0.04 }}
               className="group flex items-center gap-4 rounded-2xl border border-white/8 bg-white/4 hover:border-white/15 p-4 transition-all duration-150">
-              <BookCover title={book.title} author={book.author} size="sm" />
+              <BookCard title={book.title} author={book.author} size="sm" />
               <div className="flex-1 min-w-0">
                 <p className="font-semibold text-white truncate">{book.title}</p>
                 <p className="text-white/35 text-sm">{book.author}</p>
@@ -650,7 +666,9 @@ export default function App() {
       <header className="sticky top-0 z-20 border-b border-white/6 bg-[#0a1830]/90 backdrop-blur-md">
         <div className="max-w-2xl mx-auto px-5 h-13 flex items-center justify-between">
           <button onClick={() => setPage('home')}>
-            <img src="/serinclublogo.jpg" alt="Sërin" className="w-8 h-8 rounded-none object-contain" />
+            <div className="w-8 h-8 rounded-xl overflow-hidden">
+              <img src="/serinclublogo.jpg" alt="Sërin" className="w-full h-full object-cover block" />
+            </div>
           </button>
           <nav className="hidden sm:flex items-center gap-0.5">
             {NAV.map(({ id, label }) => (
