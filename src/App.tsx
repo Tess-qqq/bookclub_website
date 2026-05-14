@@ -270,11 +270,9 @@ function HomePage({ onNav, allEvents, allBooks }: {
 
       {/* ── Hero ── */}
       <div className="pt-10 pb-16 border-b border-white/6">
-        {/* Logo — overflow:hidden clips the jpg to the rounded corners, no bg bleed */}
+        {/* Logo — no rounding, no wrapper, clean square */}
         <motion.div style={{ y: scrollY * -0.08 }} className="mb-8 inline-block">
-          <div className="w-20 h-20 rounded-2xl overflow-hidden">
-            <img src="/serinclublogo.jpg" alt="Sërin" className="w-full h-full object-cover block" />
-          </div>
+          <img src="/serinclublogo.jpg" alt="Sërin" className="w-20 h-20 object-cover block" />
         </motion.div>
 
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
@@ -666,9 +664,7 @@ export default function App() {
       <header className="sticky top-0 z-20 border-b border-white/6 bg-[#0a1830]/90 backdrop-blur-md">
         <div className="max-w-2xl mx-auto px-5 h-13 flex items-center justify-between">
           <button onClick={() => setPage('home')}>
-            <div className="w-8 h-8 rounded-xl overflow-hidden">
-              <img src="/serinclublogo.jpg" alt="Sërin" className="w-full h-full object-cover block" />
-            </div>
+            <img src="/serinclublogo.jpg" alt="Sërin" className="w-8 h-8 object-cover block" />
           </button>
           <nav className="hidden sm:flex items-center gap-0.5">
             {NAV.map(({ id, label }) => (
