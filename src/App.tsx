@@ -301,7 +301,7 @@ function HomePage({ onNav, allEvents, allBooks }: {
 
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
           <p className="text-white/45 text-lg leading-relaxed max-w-xs mb-10">
-            A book community across Astana's universities — where reading is social, slow, and honest.
+            Sërin is a community across Astana's universities that brings people together through reading and discussion in a respectful and inclusive environment.
           </p>
           <div className="flex flex-col gap-3 w-fit">
             <a href="https://t.me/+GjXC-aQ_TbcxMTE6" target="_blank" rel="noopener noreferrer"
