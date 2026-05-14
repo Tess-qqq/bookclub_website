@@ -21,10 +21,10 @@ body {
 
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: #070e3c; }
-::-webkit-scrollbar-thumb { background: #f5a62360; border-radius: 99px; }
-::-webkit-scrollbar-thumb:hover { background: #f5a623; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.5); }
 
 .scrollbar-none { scrollbar-width: none; }
 .scrollbar-none::-webkit-scrollbar { display: none; }
 
-::selection { background: #f5a623; color: #070e3c; }
+::selection { background: rgba(255,255,255,0.3); color: #fff; }

@@ -23,7 +23,7 @@ const STATUS_LABELS: Record<EventStatus, string> = {
   voting: 'Voting Open', upcoming: 'Upcoming', active: 'Reading Now', past: 'Finished',
 };
 const SC: Record<EventStatus, { pill: string; dot: string }> = {
-  voting:   { pill: 'bg-amber-400/15 text-amber-300 border-amber-400/20',       dot: 'bg-amber-400' },
+  voting:   { pill: 'bg-white/10 text-white/80 border-white/15',       dot: 'bg-white' },
   upcoming: { pill: 'bg-sky-400/15 text-sky-300 border-sky-400/20',             dot: 'bg-sky-400' },
   active:   { pill: 'bg-emerald-400/15 text-emerald-300 border-emerald-400/20', dot: 'bg-emerald-400 animate-pulse' },
   past:     { pill: 'bg-white/5 text-white/30 border-white/10',                 dot: 'bg-white/20' },
@@ -147,11 +147,11 @@ function EventModal({ event, onClose }: { event: BookEvent; onClose: () => void 
       {event.description && <p className="text-white/50 text-sm leading-relaxed">{event.description}</p>}
 
       {event.bookTitle && (
-        <div className="flex items-center gap-4 p-4 rounded-2xl bg-amber-500/8 border border-amber-500/15">
+        <div className="flex items-center gap-4 p-4 rounded-2xl bg-white/8 border border-white/12">
           <BookCard title={event.bookTitle} author={event.bookAuthor ?? ''} size="md" />
           <div>
             <p className="font-semibold text-white">{event.bookTitle}</p>
-            <p className="text-amber-400/60 text-sm">{event.bookAuthor}</p>
+            <p className="text-white/40 text-sm">{event.bookAuthor}</p>
           </div>
         </div>
       )}
@@ -168,7 +168,7 @@ function EventModal({ event, onClose }: { event: BookEvent; onClose: () => void 
             return (
               <button key={opt.id} onClick={() => handleVote(opt.id)} disabled={voting}
                 className={`w-full text-left rounded-2xl border overflow-hidden transition-all duration-150 ${
-                  isVoted ? 'border-amber-500/60 bg-amber-500/10' : 'border-white/8 bg-white/3 hover:border-white/20'
+                  isVoted ? 'border-white/60 bg-white/10' : 'border-white/8 bg-white/3 hover:border-white/20'
                 }`}>
                 <div className="relative p-3.5">
                   {total > 0 && (
@@ -183,9 +183,9 @@ function EventModal({ event, onClose }: { event: BookEvent; onClose: () => void 
                       </div>
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">
-                      {isLeading && !isVoted && <span className="text-[10px] font-bold text-amber-400 tracking-wider">TOP</span>}
-                      <span className={`text-sm font-mono ${isVoted ? 'text-amber-400' : 'text-white/25'}`}>{pct}%</span>
-                      {isVoted && <CheckCircle className="w-4 h-4 text-amber-400" />}
+                      {isLeading && !isVoted && <span className="text-[10px] font-bold text-white tracking-wider">TOP</span>}
+                      <span className={`text-sm font-mono ${isVoted ? 'text-white' : 'text-white/25'}`}>{pct}%</span>
+                      {isVoted && <CheckCircle className="w-4 h-4 text-white" />}
                     </div>
                   </div>
                 </div>
@@ -216,17 +216,17 @@ function EventModal({ event, onClose }: { event: BookEvent; onClose: () => void 
               value={reviewText}
               onChange={e => setReviewText(e.target.value)}
               rows={2}
-              className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-amber-500/40 transition-colors resize-none"
+              className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-white/30 transition-colors resize-none"
             />
             <div className="flex gap-2">
               <input
                 placeholder="Your name (optional)"
                 value={reviewName}
                 onChange={e => setReviewName(e.target.value)}
-                className="flex-1 px-3 py-2 bg-white/5 border border-white/10 rounded-xl text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-amber-500/40 transition-colors"
+                className="flex-1 px-3 py-2 bg-white/5 border border-white/10 rounded-xl text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-white/30 transition-colors"
               />
               <button type="submit" disabled={posting || !reviewText.trim()}
-                className="px-4 py-2 bg-amber-500 text-[#070e3c] rounded-xl text-sm font-semibold hover:bg-amber-400 transition-colors disabled:opacity-30 flex items-center gap-1.5">
+                className="px-4 py-2 bg-white text-[#070e3c] rounded-xl text-sm font-semibold hover:bg-white/90 transition-colors disabled:opacity-30 flex items-center gap-1.5">
                 <Send className="w-3.5 h-3.5" />
               </button>
             </div>
@@ -294,12 +294,11 @@ function HomePage({ onNav, allEvents, allBooks }: {
 
       {/* ── Hero ── */}
       <div className="pt-10 pb-16 border-b border-white/6">
-        <motion.div style={{ y: scrollY * -0.08 }} className="mb-8 inline-block">
-          <span className="font-display text-2xl font-black tracking-widest text-white uppercase">SËRIN</span>
+        <motion.div style={{ y: scrollY * -0.08 }} className="mb-10 inline-block">
+          <img src="/serinclublogo.jpg" alt="Sërin" className="w-24 h-24 object-cover rounded-2xl" />
         </motion.div>
 
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-          <h1 className="font-display text-6xl text-white leading-none tracking-tight mb-4">Sërin</h1>
           <p className="text-white/45 text-lg leading-relaxed max-w-xs mb-10">
             A book community across Astana's universities — where reading is social, slow, and honest.
           </p>
@@ -309,7 +308,7 @@ function HomePage({ onNav, allEvents, allBooks }: {
               Join Telegram community <ArrowRight className="w-4 h-4" />
             </a>
             <button onClick={() => onNav('events')}
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-amber-500 text-[#070e3c] rounded-full text-sm font-semibold hover:bg-amber-400 active:scale-95 transition-all">
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-white text-[#070e3c] rounded-full text-sm font-semibold hover:bg-white/90 active:scale-95 transition-all">
               See what we're reading <ArrowRight className="w-4 h-4" />
             </button>
           </div>
@@ -326,7 +325,7 @@ function HomePage({ onNav, allEvents, allBooks }: {
         ].map(({ num, title, body }, i) => (
           <motion.div key={num} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 + i * 0.1 }}
             className="flex gap-6">
-            <span className="font-mono text-[11px] text-amber-400/30 pt-0.5 flex-shrink-0 w-6">{num}</span>
+            <span className="font-mono text-[11px] text-white/20 pt-0.5 flex-shrink-0 w-6">{num}</span>
             <div>
               <p className="font-semibold text-white mb-1">{title}</p>
               <p className="text-white/35 text-sm leading-relaxed">{body}</p>
@@ -341,7 +340,7 @@ function HomePage({ onNav, allEvents, allBooks }: {
         <div className="grid grid-cols-3 gap-8 text-center">
           {[{ val: nBooks, label: 'On the list' }, { val: nRead, label: 'Books read' }, { val: nVotes, label: 'Votes cast' }].map(({ val, label }) => (
             <div key={label}>
-              <p className="font-display text-4xl text-amber-400 leading-none">{val}</p>
+              <p className="font-display text-4xl text-white leading-none">{val}</p>
               <p className="text-white/25 text-xs mt-2 uppercase tracking-wider">{label}</p>
             </div>
           ))}
@@ -386,7 +385,7 @@ function HomePage({ onNav, allEvents, allBooks }: {
               className="flex items-start justify-between gap-4 py-4 border-b border-white/5 last:border-0">
               <div>
                 <div className="flex items-center gap-2 mb-0.5">
-                  <span className="text-[10px] font-mono font-bold text-amber-400/60 uppercase tracking-wider">{campus.tag}</span>
+                  <span className="text-[10px] font-mono font-bold text-white/40 uppercase tracking-wider">{campus.tag}</span>
                   <span className="text-[10px] text-white/20">{campus.est}</span>
                 </div>
                 <p className="text-white/70 text-sm font-medium">Sërin at {campus.name}</p>
@@ -394,7 +393,7 @@ function HomePage({ onNav, allEvents, allBooks }: {
               <div className="flex flex-col items-end gap-1">
                 {campus.links.map(l => (
                   <a key={l.label} href={l.href} target="_blank" rel="noopener noreferrer"
-                    className="text-xs text-white/25 hover:text-amber-400 transition-colors">
+                    className="text-xs text-white/25 hover:text-white transition-colors">
                     {l.label} ↗
                   </a>
                 ))}
@@ -418,7 +417,7 @@ function HomePage({ onNav, allEvents, allBooks }: {
                 <motion.span
                   animate={{ rotate: openFaq === i ? 45 : 0 }}
                   transition={{ duration: 0.15 }}
-                  className="text-white/20 group-hover:text-amber-400 transition-colors flex-shrink-0 text-lg leading-none">
+                  className="text-white/20 group-hover:text-white transition-colors flex-shrink-0 text-lg leading-none">
                   +
                 </motion.span>
               </button>
@@ -469,7 +468,7 @@ function EventsPage({ events, loading, onSelect, uni, setUni }: {
             <motion.button layout key={ev.id}
               initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.97 }}
               onClick={() => onSelect(ev)}
-              className="group w-full text-left rounded-2xl border border-white/8 bg-white/4 hover:border-amber-500/30 hover:bg-white/6 transition-all duration-150 p-4">
+              className="group w-full text-left rounded-2xl border border-white/8 bg-white/4 hover:border-white/25 hover:bg-white/6 transition-all duration-150 p-4">
               <div className="flex items-center gap-4">
                 {ev.bookTitle && <BookCard title={ev.bookTitle} author={ev.bookAuthor ?? ''} size="sm" />}
                 <div className="flex-1 min-w-0">
@@ -480,12 +479,12 @@ function EventsPage({ events, loading, onSelect, uni, setUni }: {
                   {ev.bookTitle
                     ? <p className="text-white/35 text-xs truncate">{ev.bookTitle} · {ev.bookAuthor}</p>
                     : ev.status === 'voting'
-                      ? <p className="text-amber-400/50 text-xs">{(ev.votingOptions ?? []).reduce((s, o) => s + o.votes, 0)} votes · {(ev.votingOptions ?? []).length} options</p>
+                      ? <p className="text-white/35 text-xs">{(ev.votingOptions ?? []).reduce((s, o) => s + o.votes, 0)} votes · {(ev.votingOptions ?? []).length} options</p>
                       : null}
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0">
                   <p className="text-white/20 text-xs font-mono hidden sm:block">{ev.date}</p>
-                  <ChevronRight className="w-4 h-4 text-white/20 group-hover:text-amber-400 transition-colors" />
+                  <ChevronRight className="w-4 h-4 text-white/20 group-hover:text-white transition-colors" />
                 </div>
               </div>
             </motion.button>
@@ -561,8 +560,8 @@ function ActivityPage({ allEvents, allBooks }: { allEvents: BookEvent[]; allBook
       </div>
 
       {total > 0 && (
-        <div className="rounded-2xl border border-amber-500/15 bg-amber-500/6 p-5">
-          <p className="text-amber-400/50 text-[10px] uppercase tracking-widest font-semibold mb-1">Most active</p>
+        <div className="rounded-2xl border border-white/12 bg-white/6 p-5">
+          <p className="text-white/35 text-[10px] uppercase tracking-widest font-semibold mb-1">Most active</p>
           <p className="font-display text-2xl text-white">{best.fullName}</p>
           <p className="text-white/30 text-sm mt-0.5">{best.events} event{best.events !== 1 ? 's' : ''} · {best.books} on the list</p>
         </div>
@@ -574,10 +573,10 @@ function ActivityPage({ allEvents, allBooks }: { allEvents: BookEvent[]; allBook
           <div key={u.id} className="flex items-center gap-3">
             <span className="text-xs font-semibold text-white/40 w-10 flex-shrink-0">{u.name}</span>
             <div className="flex-1 h-7 rounded-xl bg-white/4 border border-white/6 relative overflow-hidden">
-              <motion.div className="absolute inset-y-0 left-0 bg-amber-500/25 border-r border-amber-400/20"
+              <motion.div className="absolute inset-y-0 left-0 bg-white/20 border-r border-white/15"
                 initial={{ width: 0 }} animate={{ width: `${(u.events / maxE) * 100}%` }}
                 transition={{ duration: 0.6, delay: i * 0.08, ease: 'easeOut' }} />
-              <span className="absolute inset-0 flex items-center px-3 text-xs text-amber-300/70 font-mono">
+              <span className="absolute inset-0 flex items-center px-3 text-xs text-white/40 font-mono">
                 {u.events} event{u.events !== 1 ? 's' : ''}
               </span>
             </div>
@@ -593,7 +592,7 @@ function ActivityPage({ allEvents, allBooks }: { allEvents: BookEvent[]; allBook
           { n: votes,          l: 'Votes cast' },
         ].map(({ n, l }) => (
           <div key={l} className="rounded-2xl border border-white/8 bg-white/4 p-4 flex items-end gap-2">
-            <span className="font-display text-3xl text-amber-400 leading-none">{n}</span>
+            <span className="font-display text-3xl text-white leading-none">{n}</span>
             <span className="text-white/30 text-xs mb-0.5">{l}</span>
           </div>
         ))}
@@ -603,7 +602,7 @@ function ActivityPage({ allEvents, allBooks }: { allEvents: BookEvent[]; allBook
         {byUni.map((u, i) => (
           <div key={u.id} className={`flex items-center justify-between px-4 py-3 ${i % 2 === 0 ? 'bg-white/3' : 'bg-white/2'}`}>
             <span className="text-white/50 text-sm">{u.fullName}</span>
-            <span className="text-amber-400/70 text-sm font-mono">{u.books} book{u.books !== 1 ? 's' : ''}</span>
+            <span className="text-white/50 text-sm font-mono">{u.books} book{u.books !== 1 ? 's' : ''}</span>
           </div>
         ))}
       </div>
@@ -618,7 +617,7 @@ function UniTabs({ active, setActive }: { active: UniId; setActive: (u: UniId) =
       {UNIVERSITIES.map(u => (
         <button key={u.id} onClick={() => setActive(u.id)}
           className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all duration-150 ${
-            active === u.id ? 'bg-amber-500 text-[#070e3c]' : 'text-white/40 hover:text-white'
+            active === u.id ? 'bg-white text-[#070e3c]' : 'text-white/40 hover:text-white'
           }`}>
           {u.name}
         </button>
@@ -686,14 +685,14 @@ export default function App() {
       {/* Header */}
       <header className="sticky top-0 z-20 border-b border-white/6 bg-[#070e3c]/90 backdrop-blur-md">
         <div className="max-w-2xl mx-auto px-5 h-13 flex items-center justify-between">
-          <button onClick={() => setPage('home')} className="font-display font-black text-white text-sm tracking-widest uppercase">
-            SËRIN
+          <button onClick={() => setPage('home')}>
+            <img src="/serinclublogo.jpg" alt="Sërin" className="w-8 h-8 object-cover rounded-lg" />
           </button>
           <nav className="hidden sm:flex items-center gap-0.5">
             {NAV.map(({ id, label }) => (
               <button key={id} onClick={() => setPage(id as Page)}
                 className={`px-3.5 py-1.5 rounded-full text-sm font-medium transition-all ${
-                  page === id ? 'bg-amber-500 text-[#070e3c]' : 'text-white/40 hover:text-white'
+                  page === id ? 'bg-white text-[#070e3c]' : 'text-white/40 hover:text-white'
                 }`}>
                 {label}
               </button>
@@ -734,7 +733,7 @@ export default function App() {
           {NAV.map(({ id, label, icon: Icon }) => (
             <button key={id} onClick={() => setPage(id as Page)}
               className={`flex flex-col items-center gap-0.5 px-3 py-2 transition-colors ${
-                page === id ? 'text-amber-400' : 'text-white/25'
+                page === id ? 'text-white' : 'text-white/25'
               }`}>
               <Icon className="w-5 h-5" />
               <span className="text-[10px] font-medium">{label}</span>
