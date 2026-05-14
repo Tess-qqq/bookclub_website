@@ -9,6 +9,7 @@ import {
   subscribeToEvents, castVote, getUserVote, postReview,
   type BookEvent, type EventStatus,
 } from './services/eventService';
+import * as React from "react";
 
 const UNIVERSITIES = [
   { id: 'AMU',  name: 'AMU',  fullName: 'Astana Medical University' },
@@ -303,14 +304,14 @@ function HomePage({ onNav, allEvents, allBooks }: {
             A book community across Astana's universities — where reading is social, slow, and honest.
           </p>
           <div className="flex flex-col gap-3 w-fit">
-            <button onClick={() => onNav('events')}
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-white text-[#070e3c] rounded-full text-sm font-semibold hover:bg-white/90 active:scale-95 transition-all">
-              See what we're reading <ArrowRight className="w-4 h-4" />
-            </button>
             <a href="https://t.me/+GjXC-aQ_TbcxMTE6" target="_blank" rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-white/10 text-white border border-white/15 rounded-full text-sm font-semibold hover:bg-white/15 active:scale-95 transition-all">
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-white text-[#070e3c] rounded-full text-sm font-semibold hover:bg-white/90 active:scale-95 transition-all">
               Join Telegram community <ArrowRight className="w-4 h-4" />
             </a>
+            <button onClick={() => onNav('events')}
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-white/10 text-white border border-white/15 rounded-full text-sm font-semibold hover:bg-white/15 active:scale-95 transition-all">
+              See what we're reading <ArrowRight className="w-4 h-4" />
+            </button>
           </div>
         </motion.div>
       </div>
@@ -319,16 +320,15 @@ function HomePage({ onNav, allEvents, allBooks }: {
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}
         className="py-14 border-b border-white/6 space-y-8">
         {[
-          { num: '01', title: 'One book, everyone reads',  body: 'Every event, the whole community picks one book together. No lectures, no tests — just the same pages, different minds.' },
-          { num: '02', title: 'You vote on what\'s next',  body: 'Suggest books, cast your vote, see what wins. The next read is always a collective decision.' },
-          { num: '03', title: 'Show up as you are',        body: 'No deadlines. No correct taste. Read slow, read weird, or just come for the conversation. Everyone belongs here.' },
-        ].map(({ num, title, body }, i) => (
+          { num: '01', title: 'One book, everyone reads'},
+          { num: '02', title: 'You vote on what\'s next'},
+          { num: '03', title: 'Be Yourself'},
+        ].map(({ num, title}, i) => (
           <motion.div key={num} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 + i * 0.1 }}
             className="flex gap-6">
             <span className="font-mono text-[11px] text-white/20 pt-0.5 flex-shrink-0 w-6">{num}</span>
             <div>
               <p className="font-semibold text-white mb-1">{title}</p>
-              <p className="text-white/35 text-sm leading-relaxed">{body}</p>
             </div>
           </motion.div>
         ))}
