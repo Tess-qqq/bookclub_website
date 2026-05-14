@@ -303,14 +303,14 @@ function HomePage({ onNav, allEvents, allBooks }: {
             A book community across Astana's universities — where reading is social, slow, and honest.
           </p>
           <div className="flex flex-col gap-3 w-fit">
-            <a href="https://t.me/+GjXC-aQ_TbcxMTE6" target="_blank" rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-white/10 text-white border border-white/15 rounded-full text-sm font-semibold hover:bg-white/15 active:scale-95 transition-all">
-              Join Telegram community <ArrowRight className="w-4 h-4" />
-            </a>
             <button onClick={() => onNav('events')}
               className="inline-flex items-center gap-2 px-5 py-2.5 bg-white text-[#070e3c] rounded-full text-sm font-semibold hover:bg-white/90 active:scale-95 transition-all">
               See what we're reading <ArrowRight className="w-4 h-4" />
             </button>
+            <a href="https://t.me/+GjXC-aQ_TbcxMTE6" target="_blank" rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-white/10 text-white border border-white/15 rounded-full text-sm font-semibold hover:bg-white/15 active:scale-95 transition-all">
+              Join Telegram community <ArrowRight className="w-4 h-4" />
+            </a>
           </div>
         </motion.div>
       </div>
@@ -405,7 +405,7 @@ function HomePage({ onNav, allEvents, allBooks }: {
 
       {/* ── FAQ ── */}
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }}
-        className="py-14 border-b border-white/6">
+        className="py-14">
         <p className="text-[10px] uppercase tracking-widest text-white/20 font-semibold mb-6">FAQ</p>
         <div className="space-y-0">
           {FAQ.map(({ q, a }, i) => (
@@ -440,12 +440,12 @@ function HomePage({ onNav, allEvents, allBooks }: {
 
       {/* ── Footer ── */}
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.45 }}
-        className="pt-14 pb-4 border-t border-white/6 mt-4">
+        className="pt-10 pb-4">
         <p className="text-white/20 text-xs leading-relaxed max-w-sm">
-          If you reached the bottom of the page, you're probably avoiding reading your current book. Congratulations. You scrolled further than most people read.
+          Congratulations. You scrolled further than most people read. If you reached the bottom of the page, you're probably avoiding reading your book.
         </p>
-        <p className="text-white/15 text-xs mt-3">
-          Built in Astana, 2026 by Imangali. Probably instead of sleeping.
+        <p className="text-white/15 text-xs mt-2">
+          Built by Imangali Armanuly while ditching sleep...
         </p>
       </motion.div>
     </div>
