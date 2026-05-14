@@ -394,7 +394,7 @@ function HomePage({ onNav, allEvents, allBooks }: {
                 {campus.links.map(l => (
                   <a key={l.label} href={l.href} target="_blank" rel="noopener noreferrer"
                     className="text-xs text-white/25 hover:text-white transition-colors">
-                    {l.label} ↗
+                    {l.label}
                   </a>
                 ))}
               </div>
