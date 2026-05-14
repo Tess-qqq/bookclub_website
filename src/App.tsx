@@ -63,7 +63,7 @@ function Modal({ open, onClose, children }: { open: boolean; onClose: () => void
             initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 40 }}
             transition={{ type: 'spring', stiffness: 340, damping: 30 }}
-            className="w-full sm:max-w-lg max-h-[92vh] overflow-y-auto rounded-t-3xl sm:rounded-3xl bg-[#0f2151] border border-white/10 p-6 space-y-5"
+            className="w-full sm:max-w-lg max-h-[92vh] overflow-y-auto rounded-t-3xl sm:rounded-3xl bg-[#0d1645] border border-white/10 p-6 space-y-5"
             onClick={e => e.stopPropagation()}>
             {children}
           </motion.div>
@@ -86,11 +86,33 @@ function EventModal({ event, onClose }: { event: BookEvent; onClose: () => void 
   const [posting, setPosting]       = useState(false);
   const [reviews, setReviews]       = useState<any[]>(event.reviews ?? []);
 
+  const [localOpts, setLocalOpts] = useState(opts);
+
   const handleVote = async (optionId: string) => {
     if (!event.id || voting) return;
+    const existing = userVote;
+    if (existing === optionId) return;
+
+    // Optimistic update
+    setLocalOpts(prev => prev.map(o => {
+      if (o.id === existing) return { ...o, votes: Math.max(0, o.votes - 1) };
+      if (o.id === optionId) return { ...o, votes: o.votes + 1 };
+      return o;
+    }));
+    setUserVote(optionId);
     setVoting(true);
-    try { await castVote(event.id, optionId); setUserVote(optionId); }
-    catch { alert('Vote failed, try again.'); }
+
+    try { await castVote(event.id, optionId); }
+    catch (e: any) {
+      // Revert optimistic update on failure
+      setLocalOpts(opts);
+      setUserVote(existing);
+      if (e?.message?.includes('permission')) {
+        alert('Voting is not available right now. The admin may need to update Firestore rules.');
+      } else {
+        alert('Could not save your vote. Try again.');
+      }
+    }
     finally { setVoting(false); }
   };
 
@@ -136,11 +158,13 @@ function EventModal({ event, onClose }: { event: BookEvent; onClose: () => void 
 
       {event.status === 'voting' && opts.length > 0 && (
         <div className="space-y-2.5">
-          <p className="text-[10px] uppercase tracking-widest text-white/25 font-semibold">{total} vote{total !== 1 ? 's' : ''} cast</p>
-          {opts.map(opt => {
-            const pct = total > 0 ? Math.round((opt.votes / total) * 100) : 0;
+          <p className="text-[10px] uppercase tracking-widest text-white/25 font-semibold">{localOpts.reduce((s,o) => s+o.votes,0)} vote{localOpts.reduce((s,o)=>s+o.votes,0) !== 1 ? 's' : ''} cast</p>
+          {localOpts.map(opt => {
+            const total2 = localOpts.reduce((s, o) => s + o.votes, 0);
+            const maxV2  = Math.max(...localOpts.map(o => o.votes), 0);
+            const pct = total2 > 0 ? Math.round((opt.votes / total2) * 100) : 0;
             const isVoted   = userVote === opt.id;
-            const isLeading = opt.votes > 0 && opt.votes === maxV;
+            const isLeading = opt.votes > 0 && opt.votes === maxV2;
             return (
               <button key={opt.id} onClick={() => handleVote(opt.id)} disabled={voting}
                 className={`w-full text-left rounded-2xl border overflow-hidden transition-all duration-150 ${
@@ -202,7 +226,7 @@ function EventModal({ event, onClose }: { event: BookEvent; onClose: () => void 
                 className="flex-1 px-3 py-2 bg-white/5 border border-white/10 rounded-xl text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-amber-500/40 transition-colors"
               />
               <button type="submit" disabled={posting || !reviewText.trim()}
-                className="px-4 py-2 bg-amber-500 text-[#0a1830] rounded-xl text-sm font-semibold hover:bg-amber-400 transition-colors disabled:opacity-30 flex items-center gap-1.5">
+                className="px-4 py-2 bg-amber-500 text-[#070e3c] rounded-xl text-sm font-semibold hover:bg-amber-400 transition-colors disabled:opacity-30 flex items-center gap-1.5">
                 <Send className="w-3.5 h-3.5" />
               </button>
             </div>
@@ -280,15 +304,15 @@ function HomePage({ onNav, allEvents, allBooks }: {
           <p className="text-white/45 text-lg leading-relaxed max-w-xs mb-10">
             A book community across Astana's universities — where reading is social, slow, and honest.
           </p>
-          <div className="flex items-center gap-4">
+          <div className="flex flex-col gap-3 w-fit">
+            <a href="https://t.me/+GjXC-aQ_TbcxMTE6" target="_blank" rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-white/10 text-white border border-white/15 rounded-full text-sm font-semibold hover:bg-white/15 active:scale-95 transition-all">
+              Join Telegram community <ArrowRight className="w-4 h-4" />
+            </a>
             <button onClick={() => onNav('events')}
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-amber-500 text-[#0a1830] rounded-full text-sm font-semibold hover:bg-amber-400 active:scale-95 transition-all">
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-amber-500 text-[#070e3c] rounded-full text-sm font-semibold hover:bg-amber-400 active:scale-95 transition-all">
               See what we're reading <ArrowRight className="w-4 h-4" />
             </button>
-            <a href="https://taplink.cc/serin" target="_blank" rel="noopener noreferrer"
-              className="text-sm text-white/30 hover:text-amber-400 transition-colors">
-              taplink ↗
-            </a>
           </div>
         </motion.div>
       </div>
@@ -416,15 +440,15 @@ function HomePage({ onNav, allEvents, allBooks }: {
         </div>
       </motion.div>
 
-      {/* ── Footer links ── */}
+      {/* ── Footer ── */}
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.45 }}
-        className="pt-10 flex items-center gap-6 flex-wrap">
-        <a href="https://www.instagram.com/aituserin" target="_blank" rel="noopener noreferrer"
-          className="text-sm text-white/20 hover:text-amber-400 transition-colors">Instagram ↗</a>
-        <a href="https://t.me/+GjXC-aQ_TbcxMTE6" target="_blank" rel="noopener noreferrer"
-          className="text-sm text-white/20 hover:text-amber-400 transition-colors">Telegram ↗</a>
-        <a href="https://taplink.cc/serin" target="_blank" rel="noopener noreferrer"
-          className="text-sm text-white/20 hover:text-amber-400 transition-colors">All links ↗</a>
+        className="pt-14 pb-4 border-t border-white/6 mt-4">
+        <p className="text-white/20 text-xs leading-relaxed max-w-sm">
+          If you reached the bottom of the page, you're probably avoiding reading your current book. Congratulations. You scrolled further than most people read.
+        </p>
+        <p className="text-white/15 text-xs mt-3">
+          Built in Astana, 2026 by Imangali. Probably instead of sleeping.
+        </p>
       </motion.div>
     </div>
   );
@@ -595,7 +619,7 @@ function UniTabs({ active, setActive }: { active: UniId; setActive: (u: UniId) =
       {UNIVERSITIES.map(u => (
         <button key={u.id} onClick={() => setActive(u.id)}
           className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all duration-150 ${
-            active === u.id ? 'bg-amber-500 text-[#0a1830]' : 'text-white/40 hover:text-white'
+            active === u.id ? 'bg-amber-500 text-[#070e3c]' : 'text-white/40 hover:text-white'
           }`}>
           {u.name}
         </button>
@@ -659,9 +683,9 @@ export default function App() {
   ] as const;
 
   return (
-    <div className="min-h-screen bg-[#0a1830]">
+    <div className="min-h-screen bg-[#070e3c]">
       {/* Header */}
-      <header className="sticky top-0 z-20 border-b border-white/6 bg-[#0a1830]/90 backdrop-blur-md">
+      <header className="sticky top-0 z-20 border-b border-white/6 bg-[#070e3c]/90 backdrop-blur-md">
         <div className="max-w-2xl mx-auto px-5 h-13 flex items-center justify-between">
           <button onClick={() => setPage('home')}>
             <img src="/serinclublogo.jpg" alt="Sërin" className="w-8 h-8 object-cover block rounded-full" />
@@ -670,7 +694,7 @@ export default function App() {
             {NAV.map(({ id, label }) => (
               <button key={id} onClick={() => setPage(id as Page)}
                 className={`px-3.5 py-1.5 rounded-full text-sm font-medium transition-all ${
-                  page === id ? 'bg-amber-500 text-[#0a1830]' : 'text-white/40 hover:text-white'
+                  page === id ? 'bg-amber-500 text-[#070e3c]' : 'text-white/40 hover:text-white'
                 }`}>
                 {label}
               </button>
@@ -706,7 +730,7 @@ export default function App() {
       </main>
 
       {/* Mobile nav */}
-      <nav className="sm:hidden fixed bottom-0 left-0 right-0 border-t border-white/6 bg-[#0a1830]/95 backdrop-blur-md">
+      <nav className="sm:hidden fixed bottom-0 left-0 right-0 border-t border-white/6 bg-[#070e3c]/95 backdrop-blur-md">
         <div className="flex justify-around px-2 py-2">
           {NAV.map(({ id, label, icon: Icon }) => (
             <button key={id} onClick={() => setPage(id as Page)}
