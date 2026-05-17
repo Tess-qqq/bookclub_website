@@ -1,46 +1,18 @@
-import { 
-  collection, 
-  addDoc, 
-  query, 
-  where, 
-  orderBy, 
-  onSnapshot, 
+import {
+  collection,
+  addDoc,
+  updateDoc,
+  doc,
+  query,
+  where,
+  orderBy,
+  onSnapshot,
+  getDoc,
   serverTimestamp,
   type QuerySnapshot,
-  type DocumentData
+  type DocumentData,
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-
-export enum OperationType {
-  CREATE = 'create',
-  UPDATE = 'update',
-  DELETE = 'delete',
-  LIST = 'list',
-  GET = 'get',
-  WRITE = 'write',
-}
-
-interface FirestoreErrorInfo {
-  error: string;
-  operationType: OperationType;
-  path: string | null;
-  authInfo: {
-    userId?: string | null;
-  }
-}
-
-function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
-  const errInfo: FirestoreErrorInfo = {
-    error: error instanceof Error ? error.message : String(error),
-    authInfo: {
-      userId: 'anonymous', // As per user request: no registration
-    },
-    operationType,
-    path
-  };
-  console.error('Firestore Error: ', JSON.stringify(errInfo));
-  throw new Error(JSON.stringify(errInfo));
-}
 
 export interface Book {
   id?: string;
@@ -48,35 +20,79 @@ export interface Book {
   author: string;
   uniId: 'AMU' | 'AITU' | 'NU';
   createdAt: any;
+  thoughts?: Thought[];
 }
 
-const BOOKS_PATH = 'books';
+export interface BookRequest {
+  id?: string;
+  title: string;
+  author: string;
+  uniId: 'AMU' | 'AITU' | 'NU';
+  submittedBy: string;
+  status: 'pending' | 'approved' | 'rejected';
+  createdAt: any;
+}
 
-export async function addBook(book: Omit<Book, 'id' | 'createdAt'>) {
-  try {
-    await addDoc(collection(db, BOOKS_PATH), {
-      ...book,
-      createdAt: serverTimestamp(),
-    });
-  } catch (error) {
-    handleFirestoreError(error, OperationType.CREATE, BOOKS_PATH);
-  }
+export interface Thought {
+  id: string;
+  text: string;
+  author: string;
+  createdAt: string;
 }
 
 export function subscribeToBooks(uniId: string, callback: (books: Book[]) => void) {
   const q = query(
-    collection(db, BOOKS_PATH),
+    collection(db, 'books'),
     where('uniId', '==', uniId),
     orderBy('createdAt', 'desc')
   );
+  return onSnapshot(
+    q,
+    (snap: QuerySnapshot<DocumentData>) => callback(snap.docs.map(d => ({ id: d.id, ...d.data() })) as Book[]),
+    err => console.error('Books error:', err)
+  );
+}
 
-  return onSnapshot(q, (snapshot: QuerySnapshot<DocumentData>) => {
-    const books = snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    })) as Book[];
-    callback(books);
-  }, (error) => {
-    handleFirestoreError(error, OperationType.LIST, BOOKS_PATH);
+export async function postThought(bookId: string, text: string, author: string): Promise<void> {
+  const ref = doc(db, 'books', bookId);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) throw new Error('Book not found');
+  const thoughts = [...(snap.data().thoughts ?? [])];
+  thoughts.push({
+    id: `th_${Date.now()}`,
+    text: text.slice(0, 500),
+    author: author.slice(0, 50) || 'Anonymous',
+    createdAt: new Date().toISOString(),
   });
+  await updateDoc(ref, { thoughts });
+}
+
+export async function submitBookRequest(
+  title: string,
+  author: string,
+  uniId: 'AMU' | 'AITU' | 'NU',
+  submittedBy: string
+): Promise<void> {
+  await addDoc(collection(db, 'bookRequests'), {
+    title: title.slice(0, 200),
+    author: author.slice(0, 200),
+    uniId,
+    submittedBy: submittedBy.slice(0, 50) || 'Anonymous',
+    status: 'pending',
+    createdAt: serverTimestamp(),
+  });
+}
+
+export function subscribeToBookRequests(uniId: string, callback: (requests: BookRequest[]) => void) {
+  const q = query(
+    collection(db, 'bookRequests'),
+    where('uniId', '==', uniId),
+    where('status', '==', 'pending'),
+    orderBy('createdAt', 'desc')
+  );
+  return onSnapshot(
+    q,
+    (snap: QuerySnapshot<DocumentData>) => callback(snap.docs.map(d => ({ id: d.id, ...d.data() })) as BookRequest[]),
+    err => console.error('Book requests error:', err)
+  );
 }

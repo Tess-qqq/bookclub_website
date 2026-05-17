@@ -2,14 +2,13 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Calendar, BarChart3, Home, ChevronRight,
-  X, CheckCircle, BookMarked, ArrowRight, Send,
+  X, CheckCircle, BookMarked, ArrowRight, Send, Plus, MessageSquare,
 } from 'lucide-react';
-import { subscribeToBooks, type Book } from './services/bookService';
+import { subscribeToBooks, postThought, submitBookRequest, type Book, type Thought } from './services/bookService';
 import {
   subscribeToEvents, castVote, getUserVote, postReview,
   type BookEvent, type EventStatus,
 } from './services/eventService';
-import * as React from "react";
 
 const UNIVERSITIES = [
   { id: 'AMU',  name: 'AMU',  fullName: 'Astana Medical University' },
@@ -301,7 +300,7 @@ function HomePage({ onNav, allEvents, allBooks }: {
 
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
           <p className="text-white/45 text-lg leading-relaxed max-w-xs mb-10">
-            is a community across Astana's universities that brings people together through reading and discussion in a respectful and inclusive environment.
+            A book community across Astana's universities — where reading is social, slow, and honest.
           </p>
           <div className="flex flex-col gap-3 w-fit">
             <a href="https://t.me/+GjXC-aQ_TbcxMTE6" target="_blank" rel="noopener noreferrer"
@@ -320,15 +319,16 @@ function HomePage({ onNav, allEvents, allBooks }: {
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}
         className="py-14 border-b border-white/6 space-y-8">
         {[
-          { num: '01', title: 'One book, everyone reads'},
-          { num: '02', title: 'You vote on what\'s next'},
-          { num: '03', title: 'Be Yourself'},
-        ].map(({ num, title}, i) => (
+          { num: '01', title: 'One book, everyone reads',  body: 'Every event, the whole community picks one book together. No lectures, no tests — just the same pages, different minds.' },
+          { num: '02', title: 'You vote on what\'s next',  body: 'Suggest books, cast your vote, see what wins. The next read is always a collective decision.' },
+          { num: '03', title: 'Show up as you are',        body: 'No deadlines. No correct taste. Read slow, read weird, or just come for the conversation. Everyone belongs here.' },
+        ].map(({ num, title, body }, i) => (
           <motion.div key={num} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 + i * 0.1 }}
             className="flex gap-6">
             <span className="font-mono text-[11px] text-white/20 pt-0.5 flex-shrink-0 w-6">{num}</span>
             <div>
               <p className="font-semibold text-white mb-1">{title}</p>
+              <p className="text-white/35 text-sm leading-relaxed">{body}</p>
             </div>
           </motion.div>
         ))}
@@ -394,7 +394,7 @@ function HomePage({ onNav, allEvents, allBooks }: {
                 {campus.links.map(l => (
                   <a key={l.label} href={l.href} target="_blank" rel="noopener noreferrer"
                     className="text-xs text-white/25 hover:text-white transition-colors">
-                    {l.label}
+                    {l.label} ↗
                   </a>
                 ))}
               </div>
@@ -501,31 +501,182 @@ function EventsPage({ events, loading, onSelect, uni, setUni }: {
   );
 }
 
+// ── Book detail modal — thoughts thread ───────────────────────────────────────
+function BookDetailModal({ book, onClose }: { book: Book; onClose: () => void }) {
+  const [thoughts, setThoughts] = useState<Thought[]>(book.thoughts ?? []);
+  const [text, setText] = useState('');
+  const [name, setName] = useState('');
+  const [posting, setPosting] = useState(false);
+
+  const handlePost = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!book.id || !text.trim()) return;
+    setPosting(true);
+    try {
+      await postThought(book.id, text.trim(), name.trim());
+      setThoughts(prev => [...prev, {
+        id: `th_${Date.now()}`,
+        text: text.trim(),
+        author: name.trim() || 'Anonymous',
+        createdAt: new Date().toISOString(),
+      }]);
+      setText(''); setName('');
+    } catch { alert('Could not post. Try again.'); }
+    finally { setPosting(false); }
+  };
+
+  return (
+    <>
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-center gap-4">
+          <BookCard title={book.title} author={book.author} size="md" />
+          <div>
+            <h3 className="font-display text-xl text-white leading-snug">{book.title}</h3>
+            <p className="text-white/40 text-sm">{book.author}</p>
+          </div>
+        </div>
+        <button onClick={onClose} className="p-1.5 rounded-xl hover:bg-white/10 text-white/30 hover:text-white transition-colors flex-shrink-0">
+          <X className="w-4 h-4" />
+        </button>
+      </div>
+
+      <div className="border-t border-white/8 pt-4 space-y-3">
+        <p className="text-[10px] uppercase tracking-widest text-white/25 font-semibold flex items-center gap-1.5">
+          <MessageSquare className="w-3 h-3" /> Thoughts · {thoughts.length}
+        </p>
+        {thoughts.length === 0 && (
+          <p className="text-white/20 text-sm italic">No thoughts yet. Be the first.</p>
+        )}
+        {thoughts.map(t => (
+          <div key={t.id} className="p-3 rounded-xl bg-white/4 border border-white/8">
+            <p className="text-white/70 text-sm leading-relaxed">{t.text}</p>
+            <p className="text-white/20 text-[10px] mt-1.5">{t.author} · {new Date(t.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</p>
+          </div>
+        ))}
+        <form onSubmit={handlePost} className="space-y-2 pt-1">
+          <textarea
+            placeholder="Share your thoughts on this book…"
+            value={text}
+            onChange={e => setText(e.target.value)}
+            rows={2}
+            className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-white/30 transition-colors resize-none"
+          />
+          <div className="flex gap-2">
+            <input
+              placeholder="Your name (optional)"
+              value={name}
+              onChange={e => setName(e.target.value)}
+              className="flex-1 px-3 py-2 bg-white/5 border border-white/10 rounded-xl text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-white/30 transition-colors"
+            />
+            <button type="submit" disabled={posting || !text.trim()}
+              className="px-4 py-2 bg-white text-[#070e3c] rounded-xl text-sm font-semibold hover:bg-white/90 transition-colors disabled:opacity-30 flex items-center gap-1.5">
+              <Send className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </form>
+      </div>
+    </>
+  );
+}
+
+// ── Book request modal ────────────────────────────────────────────────────────
+function RequestBookModal({ uni, onClose }: { uni: UniId; onClose: () => void }) {
+  const [title, setTitle]   = useState('');
+  const [author, setAuthor] = useState('');
+  const [name, setName]     = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [done, setDone]     = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitting(true);
+    try {
+      await submitBookRequest(title.trim(), author.trim(), uni, name.trim());
+      setDone(true);
+    } catch { alert('Could not submit. Try again.'); }
+    finally { setSubmitting(false); }
+  };
+
+  const inputCls = "w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-white/30 transition-colors";
+
+  if (done) return (
+    <div className="text-center py-6 space-y-3">
+      <CheckCircle className="w-10 h-10 text-white mx-auto" />
+      <h3 className="font-display text-xl text-white">Request submitted</h3>
+      <p className="text-white/40 text-sm">An admin will review your suggestion and add it to the list if approved.</p>
+      <button onClick={onClose} className="mt-2 px-5 py-2.5 bg-white text-[#070e3c] rounded-full text-sm font-semibold hover:bg-white/90 transition-colors">
+        Done
+      </button>
+    </div>
+  );
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h3 className="font-display text-xl text-white">Suggest a book</h3>
+        <button type="button" onClick={onClose} className="p-1.5 hover:bg-white/10 rounded-full text-white/30 hover:text-white transition-colors">
+          <X className="w-4 h-4" />
+        </button>
+      </div>
+      <p className="text-white/35 text-sm">Admins will review your suggestion and add it to the list if approved.</p>
+      <div className="space-y-1">
+        <label className="text-[10px] uppercase tracking-wider text-white/30 font-semibold">Book title</label>
+        <input required type="text" placeholder="e.g. No Longer Human" value={title} onChange={e => setTitle(e.target.value)} className={inputCls} />
+      </div>
+      <div className="space-y-1">
+        <label className="text-[10px] uppercase tracking-wider text-white/30 font-semibold">Author</label>
+        <input required type="text" placeholder="e.g. Osamu Dazai" value={author} onChange={e => setAuthor(e.target.value)} className={inputCls} />
+      </div>
+      <div className="space-y-1">
+        <label className="text-[10px] uppercase tracking-wider text-white/30 font-semibold">Your name (optional)</label>
+        <input type="text" placeholder="Anonymous" value={name} onChange={e => setName(e.target.value)} className={inputCls} />
+      </div>
+      <button type="submit" disabled={submitting}
+        className="w-full py-3 bg-white text-[#070e3c] rounded-xl text-sm font-semibold hover:bg-white/90 transition-colors disabled:opacity-50">
+        {submitting ? 'Submitting…' : 'Submit suggestion'}
+      </button>
+    </form>
+  );
+}
+
 // ── BOOKS ─────────────────────────────────────────────────────────────────────
 function BooksPage({ books, loading, uni, setUni }: {
   books: Book[]; loading: boolean; uni: UniId; setUni: (u: UniId) => void;
 }) {
+  const [selectedBook, setSelectedBook] = useState<Book | null>(null);
+  const [requesting, setRequesting]     = useState(false);
+
   return (
     <div>
-      <h2 className="font-display text-3xl text-white mb-1">Reading List</h2>
-      <p className="text-white/35 text-sm mb-6">Books members want to read</p>
+      <div className="flex items-end justify-between mb-1">
+        <h2 className="font-display text-3xl text-white">Reading List</h2>
+        <button onClick={() => setRequesting(true)}
+          className="flex items-center gap-1.5 px-3 py-1.5 bg-white/8 text-white/60 border border-white/10 rounded-full text-xs font-medium hover:bg-white/12 hover:text-white transition-all">
+          <Plus className="w-3.5 h-3.5" /> Suggest a book
+        </button>
+      </div>
+      <p className="text-white/35 text-sm mb-6">Books members want to read · click to share thoughts</p>
       <UniTabs active={uni} setActive={setUni} />
       <div className="mt-6 grid grid-cols-1 gap-2.5">
         <AnimatePresence mode="popLayout">
           {loading ? <Spinner key="s" /> : books.length > 0 ? books.map((book, i) => (
-            <motion.div layout key={book.id}
+            <motion.button layout key={book.id}
               initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
               transition={{ delay: i * 0.04 }}
-              className="group flex items-center gap-4 rounded-2xl border border-white/8 bg-white/4 hover:border-white/15 p-4 transition-all duration-150">
+              onClick={() => setSelectedBook(book)}
+              className="group flex items-center gap-4 rounded-2xl border border-white/8 bg-white/4 hover:border-white/20 p-4 transition-all duration-150 text-left w-full">
               <BookCard title={book.title} author={book.author} size="sm" />
               <div className="flex-1 min-w-0">
                 <p className="font-semibold text-white truncate">{book.title}</p>
                 <p className="text-white/35 text-sm">{book.author}</p>
+                {(book.thoughts?.length ?? 0) > 0 && (
+                  <p className="text-white/20 text-xs mt-0.5 flex items-center gap-1">
+                    <MessageSquare className="w-3 h-3" /> {book.thoughts!.length} thought{book.thoughts!.length !== 1 ? 's' : ''}
+                  </p>
+                )}
               </div>
-              <p className="text-white/15 text-xs font-mono hidden sm:block flex-shrink-0">
-                {book.createdAt?.toDate?.()?.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) ?? ''}
-              </p>
-            </motion.div>
+              <ChevronRight className="w-4 h-4 text-white/15 group-hover:text-white/50 transition-colors flex-shrink-0" />
+            </motion.button>
           )) : (
             <motion.div key="e" initial={{ opacity: 0 }} animate={{ opacity: 1 }}
               className="py-16 text-center border border-dashed border-white/8 rounded-2xl">
@@ -535,6 +686,13 @@ function BooksPage({ books, loading, uni, setUni }: {
           )}
         </AnimatePresence>
       </div>
+
+      <Modal open={!!selectedBook} onClose={() => setSelectedBook(null)}>
+        {selectedBook && <BookDetailModal book={selectedBook} onClose={() => setSelectedBook(null)} />}
+      </Modal>
+      <Modal open={requesting} onClose={() => setRequesting(false)}>
+        <RequestBookModal uni={uni} onClose={() => setRequesting(false)} />
+      </Modal>
     </div>
   );
 }
