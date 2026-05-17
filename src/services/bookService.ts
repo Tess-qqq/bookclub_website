@@ -38,6 +38,8 @@ export interface Thought {
   text: string;
   author: string;
   createdAt: string;
+  edited?: boolean;
+  ownerKey?: string;
 }
 
 export function subscribeToBooks(uniId: string, callback: (books: Book[]) => void) {
@@ -62,16 +64,17 @@ export function subscribeToBook(bookId: string, callback: (book: Book | null) =>
   );
 }
 
-export async function postThought(bookId: string, text: string, author: string): Promise<void> {
+export async function postThought(bookId: string, text: string, author: string, ownerKey: string): Promise<void> {
   const ref = doc(db, 'books', bookId);
   const snap = await getDoc(ref);
   if (!snap.exists()) throw new Error('Book not found');
   const thoughts = [...(snap.data().thoughts ?? [])];
   thoughts.push({
     id: `th_${Date.now()}`,
-    text: text.slice(0, 500),
+    text: text.slice(0, 2000),
     author: author.slice(0, 50) || 'Anonymous',
     createdAt: new Date().toISOString(),
+    ownerKey,
   });
   await updateDoc(ref, { thoughts });
 }
@@ -104,4 +107,22 @@ export function subscribeToBookRequests(uniId: string, callback: (requests: Book
     (snap: QuerySnapshot<DocumentData>) => callback(snap.docs.map(d => ({ id: d.id, ...d.data() })) as BookRequest[]),
     err => console.error('Book requests error:', err)
   );
+}
+
+export async function editThought(bookId: string, thoughtId: string, newText: string): Promise<void> {
+  const ref = doc(db, 'books', bookId);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) throw new Error('Book not found');
+  const thoughts = (snap.data().thoughts ?? []).map((t: Thought) =>
+    t.id === thoughtId ? { ...t, text: newText.slice(0, 2000), edited: true } : t
+  );
+  await updateDoc(ref, { thoughts });
+}
+
+export async function deleteThought(bookId: string, thoughtId: string): Promise<void> {
+  const ref = doc(db, 'books', bookId);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) throw new Error('Book not found');
+  const thoughts = (snap.data().thoughts ?? []).filter((t: Thought) => t.id !== thoughtId);
+  await updateDoc(ref, { thoughts });
 }

@@ -2,9 +2,9 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Calendar, BarChart3, Home, ChevronRight,
-  X, CheckCircle, BookMarked, ArrowRight, Send, Plus, MessageSquare,
+  X, CheckCircle, BookMarked, ArrowRight, Send, Plus, MessageSquare, Pencil, Trash2,
 } from 'lucide-react';
-import { subscribeToBooks, subscribeToBook, postThought, submitBookRequest, type Book, type Thought } from './services/bookService';
+import { subscribeToBooks, subscribeToBook, postThought, editThought, deleteThought, submitBookRequest, type Book, type Thought } from './services/bookService';
 import {
   subscribeToEvents, castVote, getUserVote, postReview,
   type BookEvent, type EventStatus,
@@ -501,14 +501,24 @@ function EventsPage({ events, loading, onSelect, uni, setUni }: {
   );
 }
 
+// ── Session key — identifies this browser so user can edit/delete own thoughts
+function getSessionKey(): string {
+  let key = localStorage.getItem('serin_session');
+  if (!key) { key = `sk_${Date.now()}_${Math.random().toString(36).slice(2)}`; localStorage.setItem('serin_session', key); }
+  return key;
+}
+
 // ── Book detail modal — thoughts thread ───────────────────────────────────────
 function BookDetailModal({ book, onClose }: { book: Book; onClose: () => void }) {
   const [thoughts, setThoughts] = useState<Thought[]>(book.thoughts ?? []);
   const [text, setText]         = useState('');
   const [name, setName]         = useState('');
   const [posting, setPosting]   = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editText, setEditText]   = useState('');
+  const sessionKey = getSessionKey();
+  const MAX = 2000;
 
-  // Live subscription — all users see new thoughts without refreshing
   useEffect(() => {
     if (!book.id) return;
     return subscribeToBook(book.id, b => {
@@ -521,10 +531,24 @@ function BookDetailModal({ book, onClose }: { book: Book; onClose: () => void })
     if (!book.id || !text.trim()) return;
     setPosting(true);
     try {
-      await postThought(book.id, text.trim(), name.trim());
+      await postThought(book.id, text.trim(), name.trim(), sessionKey);
       setText('');
     } catch { alert('Could not post. Try again.'); }
     finally { setPosting(false); }
+  };
+
+  const handleEdit = async (t: Thought) => {
+    if (!book.id || !editText.trim()) return;
+    try {
+      await editThought(book.id, t.id, editText.trim());
+      setEditingId(null);
+    } catch { alert('Could not edit. Try again.'); }
+  };
+
+  const handleDelete = async (thoughtId: string) => {
+    if (!book.id || !confirm('Delete this thought?')) return;
+    try { await deleteThought(book.id, thoughtId); }
+    catch { alert('Could not delete. Try again.'); }
   };
 
   return (
@@ -550,19 +574,67 @@ function BookDetailModal({ book, onClose }: { book: Book; onClose: () => void })
           <p className="text-white/20 text-sm italic">No thoughts yet. Be the first.</p>
         )}
         {thoughts.map(t => (
-          <div key={t.id} className="p-3 rounded-xl bg-white/4 border border-white/8">
-            <p className="text-white/70 text-sm leading-relaxed">{t.text}</p>
-            <p className="text-white/20 text-[10px] mt-1.5">{t.author} · {new Date(t.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</p>
+          <div key={t.id} className="p-3 rounded-xl bg-white/4 border border-white/8 space-y-2">
+            {editingId === t.id ? (
+              <div className="space-y-2">
+                <textarea
+                  value={editText}
+                  onChange={e => setEditText(e.target.value)}
+                  maxLength={MAX}
+                  rows={3}
+                  autoFocus
+                  className="w-full px-3 py-2 bg-white/5 border border-white/15 rounded-xl text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-white/30 transition-colors resize-none"
+                />
+                <p className="text-white/20 text-[10px] text-right">{editText.length}/{MAX}</p>
+                <div className="flex gap-2">
+                  <button onClick={() => handleEdit(t)}
+                    className="px-3 py-1.5 bg-white text-[#070e3c] rounded-lg text-xs font-semibold hover:bg-white/90 transition-colors">
+                    Save
+                  </button>
+                  <button onClick={() => setEditingId(null)}
+                    className="px-3 py-1.5 bg-white/8 text-white/40 rounded-lg text-xs hover:bg-white/12 transition-colors">
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <p className="text-white/70 text-sm leading-relaxed">{t.text}</p>
+            )}
+            <div className="flex items-center justify-between">
+              <p className="text-white/20 text-[10px]">
+                {t.author} · {new Date(t.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                {t.edited && <span className="ml-1 opacity-60">· edited</span>}
+              </p>
+              {t.ownerKey === sessionKey && editingId !== t.id && (
+                <div className="flex gap-1">
+                  <button onClick={() => { setEditingId(t.id); setEditText(t.text); }}
+                    className="p-1 text-white/20 hover:text-white transition-colors rounded">
+                    <Pencil className="w-3 h-3" />
+                  </button>
+                  <button onClick={() => handleDelete(t.id)}
+                    className="p-1 text-white/20 hover:text-red-400 transition-colors rounded">
+                    <Trash2 className="w-3 h-3" />
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         ))}
+
         <form onSubmit={handlePost} className="space-y-2 pt-1">
-          <textarea
-            placeholder="Share your thoughts on this book…"
-            value={text}
-            onChange={e => setText(e.target.value)}
-            rows={2}
-            className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-white/30 transition-colors resize-none"
-          />
+          <div className="relative">
+            <textarea
+              placeholder="Share your thoughts on this book…"
+              value={text}
+              onChange={e => setText(e.target.value)}
+              maxLength={MAX}
+              rows={3}
+              className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-white/30 transition-colors resize-none"
+            />
+            <p className={`absolute bottom-2 right-3 text-[10px] ${text.length > MAX * 0.9 ? 'text-white/50' : 'text-white/15'}`}>
+              {text.length}/{MAX}
+            </p>
+          </div>
           <div className="flex gap-2">
             <input
               placeholder="Your name (optional)"
