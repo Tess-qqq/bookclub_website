@@ -4,7 +4,7 @@ import {
   Calendar, BarChart3, Home, ChevronRight,
   X, CheckCircle, BookMarked, ArrowRight, Send, Plus, MessageSquare,
 } from 'lucide-react';
-import { subscribeToBooks, postThought, submitBookRequest, type Book, type Thought } from './services/bookService';
+import { subscribeToBooks, subscribeToBook, postThought, submitBookRequest, type Book, type Thought } from './services/bookService';
 import {
   subscribeToEvents, castVote, getUserVote, postReview,
   type BookEvent, type EventStatus,
@@ -504,9 +504,17 @@ function EventsPage({ events, loading, onSelect, uni, setUni }: {
 // ── Book detail modal — thoughts thread ───────────────────────────────────────
 function BookDetailModal({ book, onClose }: { book: Book; onClose: () => void }) {
   const [thoughts, setThoughts] = useState<Thought[]>(book.thoughts ?? []);
-  const [text, setText] = useState('');
-  const [name, setName] = useState('');
-  const [posting, setPosting] = useState(false);
+  const [text, setText]         = useState('');
+  const [name, setName]         = useState('');
+  const [posting, setPosting]   = useState(false);
+
+  // Live subscription — all users see new thoughts without refreshing
+  useEffect(() => {
+    if (!book.id) return;
+    return subscribeToBook(book.id, b => {
+      if (b) setThoughts(b.thoughts ?? []);
+    });
+  }, [book.id]);
 
   const handlePost = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -514,13 +522,7 @@ function BookDetailModal({ book, onClose }: { book: Book; onClose: () => void })
     setPosting(true);
     try {
       await postThought(book.id, text.trim(), name.trim());
-      setThoughts(prev => [...prev, {
-        id: `th_${Date.now()}`,
-        text: text.trim(),
-        author: name.trim() || 'Anonymous',
-        createdAt: new Date().toISOString(),
-      }]);
-      setText(''); setName('');
+      setText('');
     } catch { alert('Could not post. Try again.'); }
     finally { setPosting(false); }
   };

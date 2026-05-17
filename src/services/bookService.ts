@@ -3,10 +3,10 @@ import {
   addDoc,
   updateDoc,
   doc,
+  onSnapshot,
   query,
   where,
   orderBy,
-  onSnapshot,
   getDoc,
   serverTimestamp,
   type QuerySnapshot,
@@ -50,6 +50,15 @@ export function subscribeToBooks(uniId: string, callback: (books: Book[]) => voi
     q,
     (snap: QuerySnapshot<DocumentData>) => callback(snap.docs.map(d => ({ id: d.id, ...d.data() })) as Book[]),
     err => console.error('Books error:', err)
+  );
+}
+
+// Live subscription to a single book — keeps thoughts in sync for all users
+export function subscribeToBook(bookId: string, callback: (book: Book | null) => void) {
+  return onSnapshot(
+    doc(db, 'books', bookId),
+    snap => callback(snap.exists() ? { id: snap.id, ...snap.data() } as Book : null),
+    err => console.error('Book error:', err)
   );
 }
 
