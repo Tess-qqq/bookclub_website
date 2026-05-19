@@ -444,7 +444,7 @@ function HomePage({ onNav, allEvents, allBooks }: {
         <p className="text-white/20 text-xs leading-relaxed max-w-sm">
           Congratulations. You scrolled further than most people read. If you reached the bottom of the page, you're probably avoiding reading your book.
         </p>
-        <p className="text-white/15 text-xs mt-2">
+        <p className="text-white/15 text-xs leading-relaxed max-w-sm">
           The book club is founded by Sabina Iskakova with pure intentions and built by Imangali Armanuly while ditching sleep...
         </p>
       </motion.div>
