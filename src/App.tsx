@@ -296,7 +296,7 @@ function HomePage({ onNav, allEvents, allBooks }: {
       {/* ── Hero ── */}
       <div className="pt-10 pb-16 border-b border-white/6">
         <motion.div style={{ y: scrollY * -0.08 }} className="mb-10 inline-block">
-          <img src="/serinclublogo.jpg" alt="Sërin" className="w-28 h-28 object-contain " />
+          <img src="/serinclublogo.jpg" alt="Sërin" className="w-28 h-28 object-contain" />
         </motion.div>
 
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
@@ -917,12 +917,8 @@ export default function App() {
       {/* Header */}
       <header className="sticky top-0 z-20 border-b border-white/6 bg-[#070e3c]/90 backdrop-blur-md">
         <div className="max-w-2xl mx-auto px-5 h-13 flex items-center justify-between">
-
-          <button
-              onClick={() => setPage('home')}
-              className="font-black text-white text-sm tracking-widest uppercase"
-              style={{ fontFamily: '"Montserrat", sans-serif', fontWeight: 900 }}>
-            SËRIN
+          <button onClick={() => setPage('home')}>
+            <img src="/serinclublogo.jpg" alt="Sërin" className="w-10 h-10 object-contain" />
           </button>
           <nav className="hidden sm:flex items-center gap-0.5">
             {NAV.map(({ id, label }) => (
