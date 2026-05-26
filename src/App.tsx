@@ -917,7 +917,7 @@ export default function App() {
       {/* Header */}
       <header className="sticky top-0 z-20 border-b border-white/6 bg-[#070e3c]/90 backdrop-blur-md">
         <div className="max-w-2xl mx-auto px-5 h-13 flex items-center justify-between">
-          <button onClick={() => setPage('home')} className="text-white text-sm uppercase tracking-widest" style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 800, letterSpacing: '0.15em' }}>
+          <button onClick={() => setPage('home')} className="text-white text-sm uppercase tracking-widest" style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700 }}>
             SËRIN
           </button>
           <nav className="hidden sm:flex items-center gap-0.5">
