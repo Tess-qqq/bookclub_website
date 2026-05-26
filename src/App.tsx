@@ -921,7 +921,7 @@ export default function App() {
 
           ```tsx
           <button onClick={() => setPage('home')}>
-            <img src="/serinclublogo.jpg" alt="Sërin" className="w-15 h-15 object-cover" />
+            <img src="/serinclublogo.jpg" alt="Sërin" className="w-14 h-14 object-cover" />
           </button>
           ```
 
