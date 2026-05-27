@@ -360,6 +360,7 @@ function HomePage({ onNav, allEvents, allBooks }: {
               links: [
                 { label: 'Instagram', href: 'https://www.instagram.com/serinlabs' },
                 { label: 'serin@nu.edu.kz', href: 'mailto:serin@nu.edu.kz' },
+                { label: 'Tiktok', href: 'https://www.tiktok.com/@serinlabs'}
               ],
             },
             {
