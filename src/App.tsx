@@ -359,7 +359,7 @@ function HomePage({ onNav, allEvents, allBooks }: {
               est: 'est. 16 Apr 2026',
               links: [
                 { label: 'Instagram', href: 'https://www.instagram.com/serinlabs' },
-                { label: 'serin@nu.edu.kz', href: 'mailto:serin@nu.edu.kz' },
+                { label: 'Contact us', href: 'mailto:serin@nu.edu.kz' },
                 { label: 'Tiktok', href: 'https://www.tiktok.com/@serinlabs'}
               ],
             },
@@ -370,6 +370,7 @@ function HomePage({ onNav, allEvents, allBooks }: {
               links: [
                 { label: 'Instagram', href: 'https://www.instagram.com/aituserin' },
                 { label: 'Telegram', href: 'https://t.me/bookmateAITU' },
+                { label: 'Tiktok', href: 'https://www.tiktok.com/@serinlabs'}
               ],
             },
             {
@@ -378,6 +379,7 @@ function HomePage({ onNav, allEvents, allBooks }: {
               est: 'est. 22 Apr 2026',
               links: [
                 { label: 'Instagram', href: 'https://www.instagram.com/muaserin' },
+                { label: 'Tiktok', href: 'https://www.tiktok.com/@serinlabs'}
               ],
             },
           ].map((campus, i) => (
