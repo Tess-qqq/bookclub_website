@@ -359,8 +359,8 @@ function HomePage({ onNav, allEvents, allBooks }: {
               est: 'est. 16 Apr 2026',
               links: [
                 { label: 'Instagram', href: 'https://www.instagram.com/serinlabs' },
-                { label: 'Contact us', href: 'mailto:serin@nu.edu.kz' },
-                { label: 'Tiktok', href: 'https://www.tiktok.com/@serinlabs'}
+                { label: 'Tiktok', href: 'https://www.tiktok.com/@serinlabs'},
+                { label: 'Email', href: 'mailto:serin@nu.edu.kz' }
               ],
             },
             {
