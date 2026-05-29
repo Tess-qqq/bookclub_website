@@ -732,7 +732,7 @@ function BooksPage({ books, loading, uni, setUni }: {
           <Plus className="w-3.5 h-3.5" /> Suggest a book
         </button>
       </div>
-      <p className="text-white/35 text-sm mb-6">Books members want to read · click to share thoughts</p>
+      <p className="text-white/35 text-sm mb-6">Books members want to read/are reading · click to share thoughts</p>
       <UniTabs active={uni} setActive={setUni} />
       <div className="mt-6 grid grid-cols-1 gap-2.5">
         <AnimatePresence mode="popLayout">
