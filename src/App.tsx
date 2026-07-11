@@ -306,12 +306,6 @@ function HomePage({ onNav, allEvents, allBooks }: {
         <p className="text-white/35 text-xs leading-relaxed mb-6">
           Admission is free, but registration is required as seating is limited.
         </p>
-        <p className="text-[10px] uppercase tracking-widest text-white/25 font-semibold mb-3">Reserve your spot</p>
-        <a href={REGISTRATION_URL} target="_blank" rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 px-6 py-3 bg-white text-[#070e3c] rounded-xl text-sm font-black uppercase tracking-widest hover:bg-white/90 active:scale-95 transition-all">
-          I'M IN <ArrowRight className="w-4 h-4" />
-        </a>
-        <p className="text-white/15 text-xs mt-2">This will open the registration form.</p>
       </motion.div>
 
       {/* ── About SËRIN SÖZ ── */}
