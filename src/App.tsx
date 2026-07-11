@@ -318,6 +318,13 @@ function HomePage({ onNav, allEvents, allBooks }: {
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}
         className="py-10 border-b border-white/6">
         <p className="text-[10px] uppercase tracking-widest text-white/25 font-semibold mb-4">About SËRIN SÖZ</p>
+        {/* Venue photo */}
+        <div className="rounded-2xl overflow-hidden mb-5 border border-white/8">
+          <img src="/cassackia.jpg" alt="Cassackia Art Space" className="w-full h-48 object-cover object-center" />
+          <div className="px-4 py-2 bg-white/4">
+            <p className="text-white/25 text-[10px] uppercase tracking-widest">Cassackia Art Space, Astana</p>
+          </div>
+        </div>
         <div className="space-y-3">
           <p className="text-white/60 text-sm leading-relaxed">
             SËRIN SÖZ is a collaborative project by SËRIN and Cassackia Art Space, created to introduce more people to the richness of Kazakh literature through meaningful conversations and inspiring guest speakers.
