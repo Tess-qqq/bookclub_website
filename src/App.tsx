@@ -20,7 +20,7 @@ const UNIVERSITIES = [
 type UniId = (typeof UNIVERSITIES)[number]['id'];
 type Page  = 'home' | 'events' | 'books' | 'activity';
 
-const REGISTRATION_URL = 'https://forms.gle/YOUR_GOOGLE_FORM_LINK';
+const REGISTRATION_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSfArLih3JWt7R1zCFFilB5538obE0yvcS2GzyuH4wzDaCF9Iw/viewform?usp=sharing&ouid=110933858619920907850';
 
 const STATUS_LABELS: Record<EventStatus, string> = {
   voting: 'Voting Open', upcoming: 'Upcoming', active: 'Reading Now', past: 'Finished',
