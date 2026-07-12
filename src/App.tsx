@@ -286,7 +286,7 @@ function HomePage({ onNav, allEvents, allBooks }: {
             { icon: '📖', text: 'Conversations on Kazakh literature and culture' },
             { icon: '🤝', text: 'A welcoming community of readers' },
             { icon: '🏛️', text: 'A unique atmosphere in one of Astana\'s most inspiring art spaces' },
-            { icon: '🎟️', text: 'Free admission for everyone' },
+            { icon: '🎟️', text: 'Free participation for everyone' },
           ].map(({ icon, text }) => (
             <div key={text} className="p-4 rounded-2xl bg-white/4 border border-white/8">
               <span className="text-xl mb-2 block">{icon}</span>
@@ -304,7 +304,7 @@ function HomePage({ onNav, allEvents, allBooks }: {
           SËRIN SÖZ is open to all. Whether you're passionate about literature or simply curious to explore it, you're welcome here.
         </p>
         <p className="text-white/35 text-xs leading-relaxed mb-6">
-          Admission is free, but registration is required as seating is limited.
+          Participation is free, but registration is required as seating is limited.
         </p>
       </motion.div>
 
