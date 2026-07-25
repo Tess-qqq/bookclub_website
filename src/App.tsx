@@ -17,7 +17,7 @@ const UNIVERSITIES = [
   { id: 'NU',   name: 'NU',   fullName: 'Nazarbayev University' },
 ] as const;
 
-type UniId = (typeof UNIVERSITIES)[number]['id'];
+type UniId = (typeof UNIVERSITIES)[number]['id'] | 'SPECIAL';
 type Page  = 'home' | 'events' | 'books' | 'activity';
 
 const REGISTRATION_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSfArLih3JWt7R1zCFFilB5538obE0yvcS2GzyuH4wzDaCF9Iw/viewform?usp=sharing&ouid=110933858619920907850';
@@ -450,17 +450,24 @@ function HomePage({ onNav, allEvents, allBooks }: {
   );
 }
 
-function EventsPage({ events, loading, onSelect, uni, setUni }: {
-  events: BookEvent[]; loading: boolean; onSelect: (e: BookEvent) => void; uni: UniId; setUni: (u: UniId) => void;
+function EventsPage({ events, loading, onSelect, uni, setUni, allEvents }: {
+  events: BookEvent[]; loading: boolean; onSelect: (e: BookEvent) => void;
+  uni: UniId; setUni: (u: UniId) => void; allEvents: BookEvent[];
 }) {
+  const displayed = uni === 'SPECIAL'
+    ? allEvents.filter(e => (e as any).special === true)
+    : events;
+
   return (
     <div>
       <h2 className="font-display text-3xl text-white mb-1">Events</h2>
-      <p className="text-white/35 text-sm mb-6">Reading events by campus</p>
+      <p className="text-white/35 text-sm mb-6">
+        {uni === 'SPECIAL' ? 'Special events across all campuses' : 'Reading events by campus'}
+      </p>
       <UniTabs active={uni} setActive={setUni} />
       <div className="space-y-2.5 mt-6">
         <AnimatePresence mode="popLayout">
-          {loading ? <Spinner key="s" /> : events.length > 0 ? events.map(ev => (
+          {loading && uni !== 'SPECIAL' ? <Spinner key="s" /> : displayed.length > 0 ? displayed.map(ev => (
             <motion.button layout key={ev.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.97 }}
               onClick={() => onSelect(ev)}
               className="group w-full text-left rounded-2xl border border-white/8 bg-white/4 hover:border-white/25 hover:bg-white/6 transition-all duration-150 p-4">
@@ -487,7 +494,9 @@ function EventsPage({ events, loading, onSelect, uni, setUni }: {
             <motion.div key="e" initial={{ opacity: 0 }} animate={{ opacity: 1 }}
               className="py-16 text-center border border-dashed border-white/8 rounded-2xl">
               <Calendar className="w-7 h-7 text-white/15 mx-auto mb-2" />
-              <p className="text-white/25 text-sm">No events yet for this campus</p>
+              <p className="text-white/25 text-sm">
+                {uni === 'SPECIAL' ? 'No special events yet' : 'No events yet for this campus'}
+              </p>
             </motion.div>
           )}
         </AnimatePresence>
@@ -747,13 +756,17 @@ function ActivityPage({ allEvents, allBooks }: { allEvents: BookEvent[]; allBook
 
 function UniTabs({ active, setActive }: { active: UniId; setActive: (u: UniId) => void }) {
   return (
-    <div className="flex gap-1 p-1 bg-white/4 rounded-xl border border-white/8 w-fit">
+    <div className="flex gap-1 p-1 bg-white/4 rounded-xl border border-white/8 w-fit flex-wrap">
       {UNIVERSITIES.map(u => (
         <button key={u.id} onClick={() => setActive(u.id)}
           className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all duration-150 ${active === u.id ? 'bg-white text-[#070e3c]' : 'text-white/40 hover:text-white'}`}>
           {u.name}
         </button>
       ))}
+      <button onClick={() => setActive('SPECIAL')}
+        className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all duration-150 ${active === 'SPECIAL' ? 'bg-white text-[#070e3c]' : 'text-white/40 hover:text-white'}`}>
+        Special
+      </button>
     </div>
   );
 }
@@ -779,6 +792,7 @@ export default function App() {
     return () => unsubs.forEach(f => f());
   }, []);
   useEffect(() => {
+    if (uni === 'SPECIAL') return;
     setEL(true);
     return subscribeToEvents(uni, e => { setEvents(e); setEL(false); setSelected(prev => prev?.id ? (e.find(ev => ev.id === prev.id) ?? prev) : prev); });
   }, [uni]);
@@ -821,7 +835,7 @@ export default function App() {
           )}
           {page === 'events' && (
             <motion.div key="events" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}>
-              <EventsPage events={events} loading={eventsLoading} onSelect={setSelected} uni={uni} setUni={setUni} />
+              <EventsPage events={events} loading={eventsLoading} onSelect={setSelected} uni={uni} setUni={setUni} allEvents={allEvents} />
             </motion.div>
           )}
           {page === 'books' && (
