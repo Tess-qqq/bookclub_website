@@ -20,8 +20,6 @@ const UNIVERSITIES = [
 type UniId = (typeof UNIVERSITIES)[number]['id'] | 'SPECIAL';
 type Page  = 'home' | 'events' | 'books' | 'activity';
 
-const REGISTRATION_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSfArLih3JWt7R1zCFFilB5538obE0yvcS2GzyuH4wzDaCF9Iw/viewform?usp=sharing&ouid=110933858619920907850';
-
 const STATUS_LABELS: Record<EventStatus, string> = {
   voting: 'Voting Open', upcoming: 'Upcoming', active: 'Reading Now', past: 'Finished',
 };
@@ -249,108 +247,37 @@ function HomePage({ onNav, allEvents, allBooks }: {
   return (
     <div className="pb-16">
 
-      {/* ── SËRIN SÖZ Hero ── */}
-      <div className="relative -mx-5 overflow-hidden" style={{ minHeight: 420 }}>
-        <div className="absolute inset-0 bg-gradient-to-b from-[#070e3c]/30 via-[#070e3c]/70 to-[#070e3c] z-10" />
-        <img src="/sozbackground.jpg" alt="" className="absolute inset-0 w-full h-full object-cover object-top"
-          onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-        <div className="relative z-20 px-5 pt-10 pb-16">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-            <p className="text-white/50 text-xs uppercase tracking-widest font-semibold mb-3">New · Open Event</p>
-            <h1 className="font-display font-black text-5xl text-white leading-none tracking-tight mb-2">SËRIN SÖZ</h1>
-            <p className="text-white/60 text-base mb-5">An Open Literary Series About Kazakh Literature</p>
-            <p className="text-white/70 text-sm leading-relaxed max-w-xs mb-2">
-              A new open literary series created in collaboration with Cassackia Art Space.
-            </p>
-            <p className="text-white/50 text-sm leading-relaxed max-w-xs mb-8">
-              We explore Kazakh literature through conversations about culture, language, identity, and history.
-            </p>
-            <div className="space-y-1.5 mb-8">
-              <div className="flex items-center gap-2 text-white/70 text-sm"><span>📍</span> Cassackia Art Space, Astana</div>
-              <div className="flex items-center gap-2 text-white/70 text-sm"><span>📅</span> July 18 · 3:00 PM</div>
-            </div>
-            <a href={REGISTRATION_URL} target="_blank" rel="noopener noreferrer"
-              className="flex items-center justify-center gap-2 w-full py-4 bg-white text-[#070e3c] rounded-2xl text-base font-black uppercase tracking-widest hover:bg-white/90 active:scale-95 transition-all">
-              I'M IN <ArrowRight className="w-5 h-5" />
+      {/* ── Hero ── */}
+      <div className="pt-10 pb-16 border-b border-white/6">
+        <motion.div style={{ y: scrollY * -0.08 }} className="mb-10 inline-block">
+          <img src="/serinclublogo.jpg" alt="Sërin" className="w-28 h-28 object-contain" />
+        </motion.div>
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+          <p className="text-white/45 text-lg leading-relaxed max-w-xs mb-10">
+            A community across Astana's universities that brings people together through reading and discussion in a respectful and inclusive environment.
+          </p>
+          <div className="flex flex-col gap-3 w-fit">
+            <a href="https://t.me/+GjXC-aQ_TbcxMTE6" target="_blank" rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-white text-[#070e3c] rounded-full text-sm font-semibold hover:bg-white/90 active:scale-95 transition-all">
+              Join Telegram community <ArrowRight className="w-4 h-4" />
             </a>
-          </motion.div>
-        </div>
+            <button onClick={() => onNav('events')}
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-white/10 text-white border border-white/15 rounded-full text-sm font-semibold hover:bg-white/15 active:scale-95 transition-all">
+              See what we're reading <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
+        </motion.div>
       </div>
 
-      {/* ── What to Expect ── */}
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}
-        className="py-10 border-b border-white/6">
-        <p className="text-[10px] uppercase tracking-widest text-white/25 font-semibold mb-5">What to expect</p>
-        <div className="grid grid-cols-2 gap-3">
-          {[
-            { icon: '📖', text: 'Conversations on Kazakh literature and culture' },
-            { icon: '🤝', text: 'A welcoming community of readers' },
-            { icon: '🏛️', text: 'A unique atmosphere in one of Astana\'s most inspiring art spaces' },
-            { icon: '🎟️', text: 'Free participation for everyone' },
-          ].map(({ icon, text }) => (
-            <div key={text} className="p-4 rounded-2xl bg-white/4 border border-white/8">
-              <span className="text-xl mb-2 block">{icon}</span>
-              <p className="text-white/55 text-xs leading-relaxed">{text}</p>
-            </div>
-          ))}
-        </div>
-      </motion.div>
-
-      {/* ── Open to Everyone ── */}
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.25 }}
-        className="py-10 border-b border-white/6">
-        <p className="text-[10px] uppercase tracking-widest text-white/25 font-semibold mb-4">Open to everyone</p>
-        <p className="text-white/65 text-sm leading-relaxed mb-2">
-          SËRIN SÖZ is open to all. Whether you're passionate about literature or simply curious to explore it, you're welcome here.
-        </p>
-        <p className="text-white/35 text-xs leading-relaxed mb-6">
-          Participation is free, but registration is required as seating is limited.
-        </p>
-      </motion.div>
-
-      {/* ── About SËRIN SÖZ ── */}
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}
-        className="py-10 border-b border-white/6">
-        <p className="text-[10px] uppercase tracking-widest text-white/25 font-semibold mb-4">About SËRIN SÖZ</p>
-        {/* Venue photo */}
-        <div className="rounded-2xl overflow-hidden mb-5 border border-white/8">
-          <img src="/cassackia.jpg" alt="Cassackia Art Space" className="w-full h-48 object-cover object-center" />
-          <div className="px-4 py-2 bg-white/4">
-            <p className="text-white/25 text-[10px] uppercase tracking-widest">Cassackia Art Space, Astana</p>
-          </div>
-        </div>
-        <div className="space-y-3">
-          <p className="text-white/60 text-sm leading-relaxed">
-            SËRIN SÖZ is a collaborative project by SËRIN and Cassackia Art Space, created to introduce more people to the richness of Kazakh literature through meaningful conversations and inspiring guest speakers.
-          </p>
-          <p className="text-white/60 text-sm leading-relaxed">
-            Each event focuses on a different theme, author, or literary work, offering new perspectives and creating space for dialogue, curiosity, and cultural exchange.
-          </p>
-          <p className="text-white/35 text-sm leading-relaxed italic">
-            We believe literature is not only something to read — it's something to experience together.
-          </p>
-        </div>
-      </motion.div>
-
-      {/* ── About the club ── */}
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.32 }}
-        className="py-8 border-b border-white/6 flex items-center gap-4">
-        <img src="/serinclublogo.jpg" alt="Sërin" className="w-14 h-14 object-cover flex-shrink-0" />
-        <div>
-          <p className="font-display font-black text-white text-lg uppercase tracking-widest">SËRIN</p>
-          <p className="text-white/35 text-xs">The book club behind SËRIN SÖZ</p>
-        </div>
-      </motion.div>
-
       {/* ── Three pillars ── */}
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.34 }}
-        className="py-10 border-b border-white/6 space-y-6">
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}
+        className="py-14 border-b border-white/6 space-y-8">
         {[
           { num: '01', title: 'One book, everyone reads' },
           { num: '02', title: 'You vote on what\'s next' },
           { num: '03', title: 'Show up as you are' },
         ].map(({ num, title }, i) => (
-          <motion.div key={num} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.36 + i * 0.08 }} className="flex gap-6">
+          <motion.div key={num} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 + i * 0.1 }} className="flex gap-6">
             <span className="font-mono text-[11px] text-white/20 pt-0.5 flex-shrink-0 w-6">{num}</span>
             <p className="font-semibold text-white">{title}</p>
           </motion.div>
@@ -358,8 +285,8 @@ function HomePage({ onNav, allEvents, allBooks }: {
       </motion.div>
 
       {/* ── Stats ── */}
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.38 }}
-        className="py-10 border-b border-white/6">
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}
+        className="py-14 border-b border-white/6">
         <div className="grid grid-cols-3 gap-8 text-center">
           {[{ val: nBooks, label: 'On the list' }, { val: nRead, label: 'Books read' }, { val: nVotes, label: 'Votes cast' }].map(({ val, label }) => (
             <div key={label}>
@@ -371,15 +298,15 @@ function HomePage({ onNav, allEvents, allBooks }: {
       </motion.div>
 
       {/* ── Campuses ── */}
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }}
-        className="py-10 border-b border-white/6">
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.35 }}
+        className="py-14 border-b border-white/6">
         <p className="text-[10px] uppercase tracking-widest text-white/20 font-semibold mb-6">Campuses</p>
         {[
           { name: 'Nazarbayev University', tag: 'NU', est: 'est. 16 Apr 2026', links: [{ label: 'Instagram', href: 'https://www.instagram.com/serinlabs' }, { label: 'serin@nu.edu.kz', href: 'mailto:serin@nu.edu.kz' }] },
           { name: 'Astana IT University', tag: 'AITU', est: 'est. 30 Apr 2026', links: [{ label: 'Instagram', href: 'https://www.instagram.com/aituserin' }, { label: 'Telegram', href: 'https://t.me/bookmateAITU' }] },
           { name: 'Astana Medical University', tag: 'AMU', est: 'est. 22 Apr 2026', links: [{ label: 'Instagram', href: 'https://www.instagram.com/muaserin' }] },
         ].map((campus, i) => (
-          <motion.div key={campus.tag} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.42 + i * 0.08 }}
+          <motion.div key={campus.tag} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 + i * 0.08 }}
             className="flex items-start justify-between gap-4 py-4 border-b border-white/5 last:border-0">
             <div>
               <div className="flex items-center gap-2 mb-0.5">
@@ -397,23 +324,8 @@ function HomePage({ onNav, allEvents, allBooks }: {
         ))}
       </motion.div>
 
-      {/* ── Join CTA ── */}
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.42 }}
-        className="py-10 border-b border-white/6 space-y-3">
-        <a href="https://t.me/+GjXC-aQ_TbcxMTE6" target="_blank" rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 px-5 py-2.5 bg-white text-[#070e3c] rounded-full text-sm font-semibold hover:bg-white/90 active:scale-95 transition-all">
-          Join Telegram community <ArrowRight className="w-4 h-4" />
-        </a>
-        <div>
-          <button onClick={() => onNav('events')}
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-white/10 text-white border border-white/15 rounded-full text-sm font-semibold hover:bg-white/15 active:scale-95 transition-all">
-            See what we're reading <ArrowRight className="w-4 h-4" />
-          </button>
-        </div>
-      </motion.div>
-
       {/* ── FAQ ── */}
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.44 }} className="py-10">
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }} className="py-14">
         <p className="text-[10px] uppercase tracking-widest text-white/20 font-semibold mb-6">FAQ</p>
         {FAQ.map(({ q, a }, i) => (
           <div key={i} className="border-b border-white/5 last:border-0">
@@ -435,12 +347,7 @@ function HomePage({ onNav, allEvents, allBooks }: {
       </motion.div>
 
       {/* ── Footer ── */}
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.46 }} className="pt-6 pb-4 border-t border-white/6">
-        <div className="flex items-center gap-3 mb-4">
-          <span className="font-display font-black text-white/30 text-sm uppercase tracking-widest">SËRIN</span>
-          <span className="text-white/15 text-xs">×</span>
-          <span className="text-white/25 text-xs uppercase tracking-widest font-semibold">Cassackia Art Space</span>
-        </div>
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.45 }} className="pt-10 pb-4">
         <p className="text-white/20 text-xs leading-relaxed max-w-sm">
           Congratulations. You scrolled further than most people read. If you reached the bottom of the page, you're probably avoiding reading your book.
         </p>
